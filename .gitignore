@@ -7,3 +7,5 @@ venv/
 .venv/
 .env/
 env/
+test.py
+test_files/*
