@@ -1,6 +1,7 @@
 import os
 import json
 import shutil
+import random
 import logging
 
 log = logging.getLogger(__name__)
@@ -8,14 +9,28 @@ log = logging.getLogger(__name__)
 HOME = os.getenv("PENNE_HOME", f"{os.path.expanduser('~')}/.penne")
 CONFIG_FILE_PATH = f"{HOME}/penne.json"
 VERSION_NUMBERS = "0.1"
-VERSION_STRING = "dev" if VERSION_NUMBERS.count(".") < 2 else "stable"
-WELCOME_BANNER = rf"""
+VERSION_STRING = "dev" if VERSION_NUMBERS.count(".") > 2 else "stable"
+SAYING = (
+    "This AV is so good, it's pre-pasta-rous ...",
+    "Hey Penne, don't you be a meanie!",
+    "We did it fusilli reasons ...",
+    "Penne for your thoughts?",
+    "I ain't alfredo no malware!",
+    "You wouldn't drezga a fancy bear, would you?",
+    "If APT41 was a pasta, they'd be angel hair ...",
+    "It's a farfalle drop from the top!",
+    "Spaghetti (that's it just spaghetti)",
+    "Penne-AV, stopping APT's since never ...",
+    "It cost a pretty penne to make this AV!"
+)
+WELCOME_BANNER = """
 \t__________                                         _________   ____
-\t\______   \ ____   ____   ____   ____             /  _  \   \ /   /
-\t |     ___// __ \ /    \ /    \_/ __ \   ______  /  /_\  \   Y   / 
-\t |    |   \  ___/|   |  \   |  \  ___/  /_____/ /    |    \     /  
-\t |____|    \___  >___|  /___|  /\___  >         \____|__  /\___/   
-\t               \/     \/     \/     \/                  \/  v{VERSION_NUMBERS}({VERSION_STRING})\n\n"""
+\t\\______   \\ ____   ____   ____   ____             /  _  \\   \\ /   /
+\t |     ___// __ \\ /    \\ /    \\_/ __ \\   ______  /  /_\\  \\   Y   / 
+\t |    |   \\  ___/|   |  \\   |  \\  ___/  /_____/ /    |    \\     /  
+\t |____|    \\___  >___|  /___|  /\\___  >         \\____|__  /\\___/   
+\t               \\/     \\/     \\/     \\/                  \\/  v{}({})\n
+\n{}\n""".format(VERSION_NUMBERS, VERSION_STRING, random.choice(SAYING))
 
 
 def init():
