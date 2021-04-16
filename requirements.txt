@@ -2,3 +2,4 @@ pyelftools
 peutils
 jail
 pycryptodome
+termcolor
