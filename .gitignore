@@ -7,4 +7,5 @@ venv/
 .venv/
 .env/
 env/
-penne/data/
+*.sqlite
+*.db
