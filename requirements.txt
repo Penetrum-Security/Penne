@@ -1,3 +1,4 @@
 pyelftools
 peutils
 jail
+pycryptodome

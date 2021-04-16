@@ -9,3 +9,5 @@ venv/
 env/
 test.py
 test_files/*
+*.sqlite
+*.db
