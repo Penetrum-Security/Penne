@@ -3,3 +3,7 @@
 penne.egg-info/*
 dist/*
 build/*
+venv/
+.venv/
+.env/
+env/
