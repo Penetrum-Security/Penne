@@ -29,8 +29,7 @@ def first_run():
     except (sqlite3.Error, Exception) as e:
         return {
             "Error": e,
-            "Stack Trace": sys.exc_info()[0],
-            "Other Exception  Info": sys.gettrace(),
+            "TraceBack": traceback.print_exc(),
             "Success": False,
             "Meanie": True
         }
