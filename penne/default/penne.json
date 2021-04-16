@@ -1,0 +1,17 @@
+{
+  "config": {
+    "penne_common": {
+      "do_beep": true,
+      "scan_type": "full",
+      "malcore_api_key": "MY-MALCORE-API-KEY"
+    },
+    "penne_folders": {
+      "quarantine_folder": "{HOME}/.quarn",
+      "database_folder": "{HOME}/db",
+      "backup_folder": "{HOME}/.backups"
+    },
+    "penne_files": {
+      "config_file": "{HOME}/penne.json"
+    }
+  }
+}
