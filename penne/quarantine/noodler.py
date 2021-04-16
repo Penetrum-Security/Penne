@@ -1,6 +1,4 @@
-import sqlite3
 import base64
-import pickle
 import pathlib
 from Crypto.Cipher import AES
 import secrets
@@ -17,3 +15,7 @@ def cold_file(sqlitedb, uploaded, encrypted):
             print()
         else:
             print()
+
+def check_prem():
+    print()
+
