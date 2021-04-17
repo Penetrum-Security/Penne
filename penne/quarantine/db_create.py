@@ -58,13 +58,13 @@ def check_updates(updated_url, pull_from_git):
     if updated_url is not None or isinstance(updated_url, str) and isinstance(pull_from_git, bool):
         cprint("[ !! ] CHECKING FOR UPDATES [ !! ]", "white", "on_blue", attrs=['dark', 'bold'])
         try:
-            cursed.execute('''INSERT INTO penne_pulls(last_pull_url, updated_from_github) VALUES ('%s', '%s')''' % (updated_url, pull_from_git))
+            cursed.execute('''INSERT INTO penne_pulls(last_pull_url, updated_from_github) VALUES ('?', '?')''', (updated_url, pull_from_git))
             con.commit()
         except sqlite3.OperationalError as e:
             cprint("[ !! ] THERE WAS AN ERROR CONENCTING TO THE DATABASE, BUILDING AND/OR REBUILDING. [ !! ]",
                    "red", "on_white", attrs=['dark', 'bold'])
             first_run()
-            cursed.execute('''INSERT INTO penne_pulls(last_pull_url, updated_from_github) VALUES ('%s', '%s')''' % (updated_url, pull_from_git))
+            cursed.execute('''INSERT INTO penne_pulls(last_pull_url, updated_from_github) VALUES ('?', '?')''' , (updated_url, pull_from_git))
             con.commit()
     else:
         cprint("[ !! ] COULD NOT CHECK FOR UPDATES [ !! ]", "red", "on_white", attrs=['dark', 'bold'])
