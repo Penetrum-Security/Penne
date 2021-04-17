@@ -9,7 +9,7 @@ import datetime as dt
 from penne.quarantine.db_create import check_updates
 import json
 
-check_updates('https://github.com/Penetrum-Security/Penne', True)
+check_updates('https://github.com/Penetrum-Security/Penne', True, False)
 
 
 def spicy_file(path, filename, detection_type, arch):
