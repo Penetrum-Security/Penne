@@ -25,7 +25,8 @@ def first_run():
                        sample_name TEXT NOT NULL DEFAULT '-',
                        sample_origin TEXT NOT NULL DEFAULT '-', 
                        sample_blob BLOB NOT NULL,
-                       encrypted TEXT NOT NULL DEFAULT 'true'
+                       encrypted TEXT NOT NULL DEFAULT 'true',
+                       stored_key TEXT NOT NULL DEFAULT '-'
         )
                        ''')
         con.execute('''
