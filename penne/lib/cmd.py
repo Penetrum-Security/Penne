@@ -34,6 +34,11 @@ class Parser(argparse.ArgumentParser):
         )
         scanning = parser.add_argument_group("Scanning Arguments")
         sigtool = parser.add_argument_group("Sigtool Arguments")
+        sigtool.add_argument(
+            "-w", "--warning", dest="warnType", default="DETECT",
+            help="Pass your own warning type by default Penne will try to detect the warning type with a default of "
+                 "a generic unwanted warning"
+        )
         misc = parser.add_argument_group("Misc Arguments")
         misc.add_argument("-f", "--filename", dest="filename", help="Pass a filename to use", default=None)
         misc.add_argument(

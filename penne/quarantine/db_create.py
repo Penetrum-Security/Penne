@@ -72,7 +72,7 @@ def check_updates(updated_url, pull_from_git):
 
 def insert_blob(blob_data, blob_name, where_found, original_name, encrypted, need_to_upload):
     if isinstance(blob_data, str) and isinstance(blob_name, str) and isinstance(where_found, str) and isinstance(original_name, str) and isinstance(encrypted, bool):
-        cursed.execute('''INSERT INTO penne_pasta(original_name, sample_name, sample_origin, sample_blob, encrypted) VALUES ('%s', '%s', '%s', '%s', '%s')''' % (original_name, blob_name, where_found, blob_data, encrypted))
+        cursed.execute('''INSERT INTO penne_pasta(original_name, sample_name, sample_origin, sample_blob, encrypted) VALUES ('?', '?', '?', '?', '?')''', (original_name, blob_name, where_found, blob_data, encrypted))
     elif isinstance(need_to_upload, bool) and need_to_upload is True:
         cprint("[ !! ] UNKNOWN SAMPLE IS BEING UPLOADED, PLEASE WAIT. [ !! ]", "red", "on_white", attrs=['dark', 'bold'])
         return {

@@ -36,13 +36,13 @@ def save_sig(sig, conf):
         file_.write("\x70\x61\x73\x74\x61\x64\x62:{}".format(sig))
 
 
-def generate_signature(sig, filler, bytes_size):
+def generate_signature(sig, filler, bytes_size, warn_type="unwanted"):
     sha256 = hashlib.sha256()
     sha256.update(sig)
     hashsum = sha256.hexdigest()
     sig = sig.encode("utf8") if not isinstance(sig, bytes) else sig
     result = sig.encode("hex")
-    return "{}:{}:{}:{}".format(filler, bytes_size, result, hashsum)
+    return "{}:{}:{}:{}:{}".format(filler, bytes_size, warn_type, result, hashsum)
 
 
 def make_signature(filename, **kwargs):
