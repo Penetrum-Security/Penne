@@ -1,4 +1,4 @@
 pyelftools
 peutils
-jail
 pycryptodome
+requests
