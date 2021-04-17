@@ -1,20 +1,18 @@
 import re
-import zlib
-import struct
-import base64
 import hashlib
 
 from penne.lib.settings import (
     init,
     log,
-    file_detection
+    file_detection,
+    random_string,
+    HOME
 )
 
 
 def verify_signature(sig):
     filler_acceptable = ("windows", "linux", "apple", "android", "unknown")
     sha_identifier = re.compile("^[a-fA-F0-9]{64}$")
-    penne_sig_identifier = re.compile("^[A-Za-z1-9]{2,5}(=)?$")
     pieces = sig.split(":")
     log.info("verifying signature")
     if pieces[0].lower() not in filler_acceptable:
@@ -25,13 +23,17 @@ def verify_signature(sig):
     except:
         log.warn("signature bytes is not of type int")
         return False
-    if not penne_sig_identifier.match(pieces[2]):
-        log.warn("penne signature was not able to be matched, is it base64 encoded?")
-        return False
     if not sha_identifier.match(pieces[-1]):
         log.warn("unable to match the checksum, is it type sha256?")
         return False
     return True
+
+
+def save_sig(sig, conf):
+    filename = "{}/{}.pasta".format(conf["config"]["penne_folders"]["user_defined"].format(HOME), random_string())
+    log.info("saving signature to user defined database under: {}".format(filename))
+    with open(filename, "wb") as file_:
+        file_.write("\x70\x61\x73\x74\x61\x64\x62:{}".format(sig))
 
 
 def generate_signature(sig, filler, bytes_size):
@@ -39,7 +41,7 @@ def generate_signature(sig, filler, bytes_size):
     sha256.update(sig)
     hashsum = sha256.hexdigest()
     sig = sig.encode("utf8") if not isinstance(sig, bytes) else sig
-    result = base64.b64encode(struct.pack(">H", (zlib.crc32(sig) & 0xffff)))
+    result = sig.encode("hex")
     return "{}:{}:{}:{}".format(filler, bytes_size, result, hashsum)
 
 
@@ -47,6 +49,7 @@ def make_signature(filename, **kwargs):
     verify = kwargs.get("verify", True)
     byte_size = kwargs.get("byte_size", 1024)
     os_filler = kwargs.get("os_filler", "Unknown")
+    no_save_sig = kwargs.get("no_save_sig", False)
 
     if os_filler == "DETECT":
         os_filler = file_detection(filename)
@@ -61,7 +64,11 @@ def make_signature(filename, **kwargs):
             res = verify_signature(signature)
             if res:
                 log.info("signature verified successfully")
-                return signature
+                if no_save_sig:
+                    log.warn("not saving signature to database file, instead outputting as raw text")
+                    return signature
+                else:
+                    return save_sig(signature, config)
             else:
                 log.error("unable to verify signature")
                 return None

@@ -45,9 +45,14 @@ class Parser(argparse.ArgumentParser):
             help="If you don't want to verify your signature, pass this switch to turn off the optimization"
         )
         misc.add_argument(
-            "-o", "--os-filler", default="DETECT", dest="osFiller",
+            "-o", "--os-filler", default="DETECT", dest="osFiller", metavar="OS-TYPE",
             help="Pass what operating system this support this signature should use. If nothing is passed Penne "
                  "will try to detect the file"
+        )
+        misc.add_argument(
+            "--no-save", action="store_true", default=False, dest="noSaveSig",
+            help="Pass this flag to output the signature as raw text instead of saving to a database file under "
+                 "PENNE_HOME/db/user_defined"
         )
         return parser.parse_args()
 

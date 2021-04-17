@@ -68,3 +68,20 @@ def init():
 def file_detection(filename):
     log.info("attempting to detect file type")
     return "Windows"
+
+
+def random_string(length=30):
+    import string
+
+    retval = []
+    acc = string.ascii_letters + string.digits
+    for _ in range(length):
+        retval.append(random.SystemRandom().choice(acc))
+    return "".join(retval)
+
+
+def verify_header(filename):
+    with open(filename, "rb") as f:
+        if f.read(7) == "\x70\x61\x73\x74\x61\x64\x62":
+            return True
+        return False
