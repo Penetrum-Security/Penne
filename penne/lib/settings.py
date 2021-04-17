@@ -1,7 +1,9 @@
 import os
+import sys
 import json
 import random
 import logging
+
 
 log_format = "[ %(levelname)s ][ %(asctime)s ] %(message)s"
 log = logging.getLogger(__name__)
@@ -85,3 +87,8 @@ def verify_header(filename):
         if f.read(7) == "\x70\x61\x73\x74\x61\x64\x62":
             return True
         return False
+
+
+def beep():
+    sys.stdout.write("\a")
+    sys.stdout.flush()

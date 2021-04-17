@@ -54,7 +54,6 @@ def make_signature(filename, **kwargs):
     if os_filler == "DETECT":
         os_filler = file_detection(filename)
 
-    # todo:// save?
     config = init()
 
     with open(filename, "rb") as file_:
@@ -75,6 +74,3 @@ def make_signature(filename, **kwargs):
         else:
             log.warn("skipping signature verification")
             return signature
-
-
-
