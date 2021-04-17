@@ -55,6 +55,8 @@ def check_prem(config):
     from penne.lib.settings import CONFIG_FILE_PATH
     if CONFIG_FILE_PATH is not None:
         if os.path.isfile(CONFIG_FILE_PATH):
+            pass
+
 
 
 
