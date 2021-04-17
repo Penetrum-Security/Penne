@@ -3,3 +3,4 @@ peutils
 pycryptodome
 requests
 termcolor
+requests
