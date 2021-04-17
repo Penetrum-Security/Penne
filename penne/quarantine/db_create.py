@@ -14,7 +14,7 @@ def first_run():
         CREATE TABLE IF NOT EXISTS penne_pulls(
                         datetime DATETIME DEFAULT CURRENT_TIMESTAMP,
                         last_pull_url TEXT NOT NULL DEFAULT '-',
-                        updated_from_github TEXT NOT NULL DEFAULT '-'
+                        updated_from_github BOOLEAN NOT NULL DEFAULT '-'
         )
                         ''')
         con.execute('''
@@ -25,7 +25,7 @@ def first_run():
                        sample_name TEXT NOT NULL DEFAULT '-',
                        sample_origin TEXT NOT NULL DEFAULT '-', 
                        sample_blob BLOB NOT NULL,
-                       encrypted TEXT NOT NULL DEFAULT 'true',
+                       encrypted BOOLEAN NOT NULL DEFAULT 'true',
                        stored_key TEXT NOT NULL DEFAULT '-'
         )
                        ''')
@@ -34,8 +34,8 @@ def first_run():
                         id INTEGER NOT NULL,
                         datetime DATETIME DEFAULT CURRENT_TIMESTAMP,
                         execution_time TEXT NOT NULL DEFAULT '-',
-                        failure TEXT NOT NULL DEFAULT 'false',
-                        preimum TEXT NOT NULL DEFAULT 'false',
+                        failure BOOLEAN NOT NULL DEFAULT 'false',
+                        preimum BOOLEAN NOT NULL DEFAULT 'false',
                         FOREIGN KEY (id) REFERENCES penne_pasta(id)
         )
                         ''')
@@ -56,7 +56,7 @@ def first_run():
 
 def check_updates(updated_url, pull_from_git):
     if updated_url is not None or isinstance(updated_url, str) and isinstance(pull_from_git, bool):
-        cprint("[ !! ] CHECKING FOR UPDATES [ !! ]", "white", "on_blue", attrs=['dark', 'bold'])
+        cprint("[ !! ] CHECKING FOR UPDATES [ !! ]", "red", "on_blue", attrs=['bold'])
         try:
             cursed.execute('''INSERT INTO penne_pulls(last_pull_url, updated_from_github) VALUES ('?', '?')''', (updated_url, pull_from_git))
             con.commit()
