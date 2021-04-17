@@ -2,3 +2,4 @@ pyelftools
 peutils
 pycryptodome
 requests
+termcolor
