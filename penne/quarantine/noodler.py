@@ -9,7 +9,7 @@ import datetime as dt
 from penne.quarantine.db_create import check_updates
 import json
 
-check_updates('https://github.com/Penetrum-Security/Penne', True)
+check_updates('https://github.com/Penetrum-Security/Penne', True, False)
 
 
 def spicy_file(path, filename, detection_type, arch):
@@ -18,7 +18,8 @@ def spicy_file(path, filename, detection_type, arch):
         key = secrets.token_hex(128)
         nonce = secrets.token_hex(64)
         cipher = ChaCha20_Poly1305.new(key, nonce)
-        outFile = './cold_files/'+str(base64.urlsafe_b64encode(key)) + '_' + str(base64.urlsafe_b64encode(nonce)) + "_" + filename + ".cold"
+        outFile = './cold_files/' + str(base64.urlsafe_b64encode(key)) + '_' + str(base64.urlsafe_b64encode(nonce)) + \
+                  "_" + filename + ".cold"
         if key is not None:
             with open(path+filename, "rb") as spicy:
                 for line in spicy.readlines():
@@ -52,12 +53,12 @@ def cold_file(sqlitedb, uploaded, encrypted):
 
 
 def check_prem(config):
-    from penne.lib.settings import CONFIG_FILE_PATH
+    from penne.lib.settings import CONFIG_FILE_PATH, download_default_config
     if CONFIG_FILE_PATH is not None:
         if os.path.isfile(CONFIG_FILE_PATH):
             pass
-
-
+        else:
+            pass
 
 
 
