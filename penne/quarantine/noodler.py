@@ -2,15 +2,20 @@ import base64
 import datetime
 import json
 import os.path
+import sys
+
 from Crypto.Cipher import ChaCha20_Poly1305
 import secrets
 from termcolor import cprint
 from penne.quarantine.db_create import check_updates
+from penne.lib.settings import (
+    log
+)
 
 check_updates('https://github.com/Penetrum-Security/Penne', True, False)
 
 
-def spicy_file(path, filename, detection_type, arch):
+def spicy_file(path, filename, detection_type, arch, detected_as):
     if isinstance(path, str) and isinstance(filename, str) and isinstance(detection_type, str) and isinstance(arch, str):
         cprint("[ !! ] THATS ONE SPICY MEATBALL, TRYING TO COOL IT DOWN [ !! ]", "white", attrs=['dark', 'bold'])
         key = secrets.token_hex(128)
@@ -34,10 +39,13 @@ def spicy_file(path, filename, detection_type, arch):
                 "Original_File": filename,
                 "Found_where": path,
                 "DetectedAs": detection_type,
-                "Cold_Time": datetime.datetime.now()
+                "Cold_Time": datetime.datetime.now(),
+                "Detection": detected_as
             }
         else:
-            print("Coming soon.")
+            log.critical("Error when deriving key. The key could not be derived, "
+                         "this is a critical error and the application cannot continue.")
+            return "Key Derivation failed, this key cannot be null."
 
 
 def cold_file(sqlitedb, user_upload_consent, encrypted):
@@ -61,5 +69,4 @@ def check_prem():
             cprint("[ + ] YOUR DEFAULT CONFIG IS MISSING. [ + ]", "red", attrs=['dark', 'bold'])
             download_default_config()
 
-check_prem()
 

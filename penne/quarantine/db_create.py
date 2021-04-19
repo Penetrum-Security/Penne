@@ -23,6 +23,7 @@ def first_run():
         CREATE TABLE IF NOT EXISTS penne_pasta(
                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
                        date DATETIME default CURRENT_TIMESTAMP,
+                       detected_as TEXT NOT NULL DEFAULT '-',
                        original_name TEXT NOT NULL DEFAULT '-',
                        sample_name TEXT NOT NULL DEFAULT '-',
                        sample_origin TEXT NOT NULL DEFAULT '-', 
@@ -76,14 +77,14 @@ def check_updates(updated_url, pull_from_git, is_premium):
         cprint("[ !! ] COULD NOT CHECK FOR UPDATES [ !! ]", "red", attrs=['dark', 'bold'])
 
 
-def insert_blob(blob_data, blob_name, where_found, original_name, encrypted, need_to_upload, nonce, key):
-    if isinstance(blob_data, str) and isinstance(blob_name, str) and isinstance(where_found, str) and isinstance(original_name, str) and isinstance(encrypted, bool):
+def insert_blob(blob_data, blob_name, where_found, original_name, encrypted, need_to_upload, nonce, key, detected_as):
+    if isinstance(blob_data, str) and isinstance(blob_name, str) and isinstance(where_found, str) and isinstance(original_name, str) and isinstance(encrypted, bool) and isinstance(detected_as, str):
         if key is None and nonce is None:
             return "Key and Nonce cannot be null"
         else:
             cursed.execute(
-                '''INSERT INTO penne_pasta(original_name, sample_name, sample_origin, sample_blob, encrypted, stored_key, stored_nonce) VALUES (?, ?, ?, ?, ?, ?, ?)''',
-                           (original_name, blob_name, where_found, blob_data, encrypted,key, nonce,))
+                '''INSERT INTO penne_pasta(detected_as, original_name, sample_name, sample_origin, sample_blob, encrypted, stored_key, stored_nonce) VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
+                           (detected_as, original_name, blob_name, where_found, blob_data, encrypted, key, nonce,))
     elif isinstance(need_to_upload, bool) and need_to_upload is True:
         cprint("[ !! ] UNKNOWN SAMPLE IS BEING UPLOADED, PLEASE WAIT. [ !! ]", "red", "on_white", attrs=['dark', 'bold'])
         return {
