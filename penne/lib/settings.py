@@ -11,7 +11,6 @@ sh = logging.StreamHandler()
 log.setLevel(logging.DEBUG)
 log.addHandler(sh)
 log.handlers[0].setFormatter(logging.Formatter(fmt=log_format, datefmt="%d-%b-%y %H:%M:%S"))
-
 HOME = os.getenv("PENNE_HOME", "{}/.penne".format(os.path.expanduser('~')))
 CONFIG_FILE_PATH = "{}/penne.json".format(HOME)
 VERSION_NUMBERS = "0.1"
@@ -41,7 +40,6 @@ WELCOME_BANNER = """
 
 def download_default_config():
     import requests
-
     download_url = "https://penetrum.com/penne/penne.json"
     log.debug("downloading default config file from: {}".format(download_url))
     req = requests.get(download_url)

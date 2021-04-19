@@ -11,3 +11,4 @@ test.py
 test_files/*
 *.sqlite
 *.db
+*.json

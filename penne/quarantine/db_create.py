@@ -60,7 +60,7 @@ def first_run():
 def check_updates(updated_url, pull_from_git, is_premium):
     if updated_url is not None or isinstance(updated_url, str) and isinstance(pull_from_git, bool):
         if is_premium is not None:
-            cprint("[ !! ] CHECKING FOR UPDATES [ !! ]", "red", "on_blue", attrs=['bold'])
+            cprint("[ !! ] CHECKING FOR UPDATES [ !! ]", "red", attrs=['bold'])
             try:
                 cursed.execute('''INSERT INTO penne_pulls(last_pull_url, updated_from_github, premium) VALUES (?, ?, ?)''',
                                (updated_url, pull_from_git, is_premium,))
@@ -73,7 +73,7 @@ def check_updates(updated_url, pull_from_git, is_premium):
                                (updated_url, pull_from_git, is_premium,))
                 con.commit()
     else:
-        cprint("[ !! ] COULD NOT CHECK FOR UPDATES [ !! ]", "red", "on_white", attrs=['dark', 'bold'])
+        cprint("[ !! ] COULD NOT CHECK FOR UPDATES [ !! ]", "red", attrs=['dark', 'bold'])
 
 
 def insert_blob(blob_data, blob_name, where_found, original_name, encrypted, need_to_upload, nonce, key):

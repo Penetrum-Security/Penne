@@ -1,5 +1,6 @@
 import base64
 import datetime
+import json
 import os.path
 from Crypto.Cipher import ChaCha20_Poly1305
 import secrets
@@ -11,12 +12,12 @@ check_updates('https://github.com/Penetrum-Security/Penne', True, False)
 
 def spicy_file(path, filename, detection_type, arch):
     if isinstance(path, str) and isinstance(filename, str) and isinstance(detection_type, str) and isinstance(arch, str):
-        cprint("[ !! ] THATS ONE SPICY MEATBALL, TRYING TO COOL IT DOWN [ !! ]", "white", "on_blue", attrs=['dark', 'bold'])
+        cprint("[ !! ] THATS ONE SPICY MEATBALL, TRYING TO COOL IT DOWN [ !! ]", "white", attrs=['dark', 'bold'])
         key = secrets.token_hex(128)
         nonce = secrets.token_hex(64)
         cipher = ChaCha20_Poly1305.new(key, nonce)
-        outFile = './cold_files/K-' + str(base64.urlsafe_b64encode(key)) + '-N' + str(base64.urlsafe_b64encode(nonce)) + \
-                  "_(" + filename + ").cold"
+        outFile = './cold_files/K-' + str(base64.urlsafe_b64encode(key)) + '_N-' + str(base64.urlsafe_b64encode(nonce)) + \
+                  "_(" + filename.strip('.') + ").cold"
         if key is not None:
             with open(path+filename, "rb") as spicy:
                 for line in spicy.readlines():
@@ -53,9 +54,12 @@ def check_prem():
     from penne.lib.settings import CONFIG_FILE_PATH, download_default_config
     if CONFIG_FILE_PATH is not None:
         if os.path.isfile(CONFIG_FILE_PATH):
-            pass
+            configfile = json.loads(CONFIG_FILE_PATH)
+            api_key = configfile['config']['penne_common']
+            return api_key['malcore_api_key']
         else:
+            cprint("[ + ] YOUR DEFAULT CONFIG IS MISSING. [ + ]", "red", attrs=['dark', 'bold'])
             download_default_config()
 
-
+check_prem()
 
