@@ -1,13 +1,10 @@
 import base64
 import datetime
 import os.path
-import pathlib
 from Crypto.Cipher import ChaCha20_Poly1305
 import secrets
 from termcolor import cprint
-import datetime as dt
 from penne.quarantine.db_create import check_updates
-import json
 
 check_updates('https://github.com/Penetrum-Security/Penne', True, False)
 
@@ -18,8 +15,8 @@ def spicy_file(path, filename, detection_type, arch):
         key = secrets.token_hex(128)
         nonce = secrets.token_hex(64)
         cipher = ChaCha20_Poly1305.new(key, nonce)
-        outFile = './cold_files/' + str(base64.urlsafe_b64encode(key)) + '_' + str(base64.urlsafe_b64encode(nonce)) + \
-                  "_" + filename + ".cold"
+        outFile = './cold_files/K-' + str(base64.urlsafe_b64encode(key)) + '-N' + str(base64.urlsafe_b64encode(nonce)) + \
+                  "_(" + filename + ").cold"
         if key is not None:
             with open(path+filename, "rb") as spicy:
                 for line in spicy.readlines():
@@ -42,23 +39,23 @@ def spicy_file(path, filename, detection_type, arch):
             print("Coming soon.")
 
 
-def cold_file(sqlitedb, uploaded, encrypted):
-    if isinstance(encrypted, bool) and isinstance(uploaded, bool):
-        if encrypted and not uploaded and sqlitedb:
+def cold_file(sqlitedb, user_upload_consent, encrypted):
+    if isinstance(encrypted, bool) and isinstance(user_upload_consent, bool):
+        if encrypted and not user_upload_consent and sqlitedb:
             print()
-        elif not encrypted and uploaded and not sqlitedb:
+        elif not encrypted and user_upload_consent and not sqlitedb:
             print()
         else:
             print()
 
 
-def check_prem(config):
+def check_prem():
     from penne.lib.settings import CONFIG_FILE_PATH, download_default_config
     if CONFIG_FILE_PATH is not None:
         if os.path.isfile(CONFIG_FILE_PATH):
             pass
         else:
-            pass
+            download_default_config()
 
 
 
