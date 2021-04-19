@@ -1,6 +1,6 @@
-pyelftools
-peutils
-pycryptodome
-requests
-termcolor
-requests
+pyelftools==0.27
+peutils==0.0.7
+pycryptodome==3.10.1
+requests==2.25.1
+termcolor==1.1.0
+pefile==2019.4.18

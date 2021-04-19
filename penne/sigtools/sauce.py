@@ -1,4 +1,5 @@
 import re
+import codecs
 import hashlib
 
 from penne.lib.settings import (
@@ -11,7 +12,7 @@ from penne.lib.settings import (
 
 
 def verify_signature(sig):
-    filler_acceptable = ("windows", "linux", "apple", "android", "unknown")
+    filler_acceptable = ("windows", "linux", "apple", "android", "doc", "ios", "unknown")
     sha_identifier = re.compile("^[a-fA-F0-9]{64}$")
     pieces = sig.split(":")
     log.info("verifying signature")
@@ -33,7 +34,7 @@ def save_sig(sig, conf):
     filename = "{}/{}.pasta".format(conf["config"]["penne_folders"]["user_defined"].format(HOME), random_string())
     log.info("saving signature to user defined database under: {}".format(filename))
     with open(filename, "wb") as file_:
-        file_.write("\x70\x61\x73\x74\x61\x64\x62:{}".format(sig))
+        file_.write("pastadb:{}".format(sig).encode())
 
 
 def generate_signature(sig, filler, bytes_size, warn_type="unwanted"):
@@ -41,14 +42,14 @@ def generate_signature(sig, filler, bytes_size, warn_type="unwanted"):
     sha256.update(sig)
     hashsum = sha256.hexdigest()
     sig = sig.encode("utf8") if not isinstance(sig, bytes) else sig
-    result = sig.encode("hex")
-    return "{}:{}:{}:{}:{}".format(filler, bytes_size, warn_type, result, hashsum)
+    result = codecs.encode(sig, encoding="hex")
+    return "{}:{}:{}:{}:{}".format(filler, bytes_size, warn_type, str(result).split("'")[1], hashsum)
 
 
 def make_signature(filename, **kwargs):
     verify = kwargs.get("verify", True)
     byte_size = kwargs.get("byte_size", 1024)
-    os_filler = kwargs.get("os_filler", "Unknown")
+    os_filler = kwargs.get("os_filler", "DETECT")
     no_save_sig = kwargs.get("no_save_sig", False)
 
     if os_filler == "DETECT":

@@ -4,6 +4,8 @@ import json
 import random
 import logging
 
+import pefile
+
 
 log_format = "[ %(levelname)s ][ %(asctime)s ] %(message)s"
 log = logging.getLogger(__name__)
@@ -65,9 +67,68 @@ def init():
             return json.load(data)
 
 
+def is_pe(filename):
+    try:
+        # easiest way to check is to use PEfile
+        pefile.PE(filename)
+        return True
+    except pefile.PEFormatError:
+        return False
+
+
+def is_elf(filename):
+    with open(filename, "rb") as f:
+        # i've honestly never seen an ELF file that didn't start with this
+        if f.read(4) == b"\x7ELF":
+            return True
+    return False
+
+
+def is_android(filename):
+    with open(filename, "rb") as f:
+        # AndroidManifest.xml
+        if b"AndroidManifest.xml" in f.read(4096):
+            return True
+    return False
+
+
+def is_apple(filename):
+    with open(filename, "rb") as f:
+        # magic bytes in .app files
+        if f.read(4) == b"\xcf\xfa\xed\xfe":
+            return True
+        f.seek(0)
+        # .lprog is usually in .ipa files
+        data = f.read(200)
+        if b".app" in data and b"Payload" in data:
+            return True
+    return False
+
+
+def is_doc(filename):
+    with open(filename, "rb") as f:
+        if f.read(4) in (b"%PDF", b"\x7b\x72\x74\x66", b"\xdb\xa5\x2d\x00", b"\x0d\x44\x4f\x43"):
+            return True
+        f.seek(0)
+        if f.read(2) in (b"\xD0\xCF", b"\x14\x00", b"\x1d\x7d"):
+            return True
+    return False
+
+
 def file_detection(filename):
-    log.info("attempting to detect file type")
-    return "Windows"
+    if is_pe(filename):
+        os_filter = "Windows"
+    elif is_elf(filename):
+        os_filter = "Linux"
+    elif is_android(filename):
+        os_filter = "Android"
+    elif is_apple(filename):
+        os_filter = "Apple"
+    elif is_doc(filename):
+        os_filter = "Doc"
+    else:
+        os_filter = "Unknown"
+    return os_filter
 
 
 def random_string(length=30):
