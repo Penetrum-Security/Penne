@@ -13,3 +13,4 @@ test_files/*
 *.db
 *.json
 venv/*
+penne/quarantine/cold_files/*

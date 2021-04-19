@@ -4,7 +4,7 @@ import traceback
 from termcolor import cprint
 
 
-con = sqlite3.connect("data/strainer.sqlite")
+con = sqlite3.connect("penne/quarantine/data/strainer.sqlite")
 cursed = con.cursor()
 
 

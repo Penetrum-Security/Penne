@@ -21,7 +21,7 @@ def spicy_file(path, filename, detection_type, arch, detected_as):
         key = secrets.token_hex(128)
         nonce = secrets.token_hex(64)
         cipher = ChaCha20_Poly1305.new(key, nonce)
-        outFile = './cold_files/K-' + str(base64.urlsafe_b64encode(key)) + '_N-' + str(base64.urlsafe_b64encode(nonce)) + \
+        outFile = 'penne/quarantine/data/cold_files/K-' + str(base64.urlsafe_b64encode(key)) + '_N-' + str(base64.urlsafe_b64encode(nonce)) + \
                   "_(" + filename.strip('.') + ").cold"
         if key is not None:
             with open(path+filename, "rb") as spicy:
