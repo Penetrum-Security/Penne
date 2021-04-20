@@ -1,2 +1,2 @@
-#  Copyright (c) 20212025 Penetrum LLC <contact@penetrum.com> (MIT License)
+#  Copyright (c) 2021-2025 Penetrum LLC <contact@penetrum.com> (MIT License)
 
