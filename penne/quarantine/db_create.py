@@ -126,5 +126,4 @@ def create_sig_table():
                                    ))
                     con.commit()
                 except sqlite3.IntegrityError as e:
-                    print("Offending Hash: {}".format(split_sig[5]))
-                    print(e)
+                    cprint("{}\nOffending Hash ->{}\n".format(e, split_sig[5]), "red", attrs=["dark"])
