@@ -119,6 +119,7 @@ def insert_blob(blob_data, blob_name, where_found, original_name, encrypted, nee
 
 
 def create_sig_table(path):
+    processed = set()
     for files in os.listdir(path):
         if files.endswith('pasta'):
             full_path = "{0}/{1}".format(path, files)
@@ -142,6 +143,7 @@ def create_sig_table(path):
     con.commit()
     return {
         "Success": True,
+        "DoClean": processed
     }
 
 
