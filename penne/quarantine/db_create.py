@@ -134,12 +134,12 @@ def create_sig_table(path):
                                            split_sig[4],
                                            split_sig[5],
                                        ))
-                        con.commit()
                     except sqlite3.IntegrityError as e:
                         pass
         else:
             cprint("[ ++ ] Appears as though a zip file or directory made its way into here... losin my noodle... [ ++ ]",
                    "red", attrs=['dark'])
+    con.commit()
     return {
         "Success": True,
     }
