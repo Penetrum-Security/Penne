@@ -118,10 +118,10 @@ def insert_blob(blob_data, blob_name, where_found, original_name, encrypted, nee
         }
 
 
-def create_sig_table():
-    for files in os.listdir(penne_json['config']['penne_folders']['unzipped_sigs'].format(HOME)):
+def create_sig_table(path):
+    for files in os.listdir(path):
         if files.endswith('pasta'):
-            full_path = "{0}/{1}".format(penne_json['config']['penne_folders']['unzipped_sigs'].format(HOME), files)
+            full_path = "{0}/{1}".format(path, files)
             with open(full_path) as in_sig:
                 for lines in in_sig.readlines():
                     split_sig = lines.split(':')
