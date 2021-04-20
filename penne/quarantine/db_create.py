@@ -137,12 +137,12 @@ def create_sig_table(path):
                         con.commit()
                     except sqlite3.IntegrityError as e:
                         pass
-            return {
-                "Success": True,
-            }
         else:
             cprint("[ ++ ] Appears as though a zip file or directory made its way into here... losin my noodle... [ ++ ]",
                    "red", attrs=['dark'])
+    return {
+        "Success": True,
+    }
 
 
 def penne_integ(hash, expected_hash, do_they_match):
