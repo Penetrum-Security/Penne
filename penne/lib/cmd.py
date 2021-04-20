@@ -64,7 +64,7 @@ class Parser(argparse.ArgumentParser):
                  "PENNE_HOME/db/user_defined"
         )
         misc = parser.add_argument_group("Misc Arguments")
-        misc.add_argument("-f", "--filename", dest="filename", help="Pass a filename to use", default=None)
+        misc.add_argument("-f", "--filename", dest="filename", help="Pass a filename or directory to use", default=None)
         return parser.parse_args()
 
 

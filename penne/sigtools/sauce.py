@@ -1,6 +1,7 @@
 #  Copyright (c) 2021-2025 Penetrum LLC <contact@penetrum.com> (MIT License)
 
 import re
+import os
 import codecs
 import hashlib
 
@@ -72,21 +73,27 @@ def make_signature(filename, **kwargs):
 
     config = init()
 
-    with open(filename, "rb") as file_:
-        first_bytes = file_.read(byte_size)
-        signature = generate_signature(first_bytes, os_filler, byte_size, warn_type=warn_type)
-        if verify:
-            res = verify_signature(signature)
-            if res:
-                log.info("signature verified successfully")
-                if no_save_sig:
-                    log.warn("not saving signature to database, instead outputting as raw text")
-                    print(signature)
+    if os.path.isdir(filename):
+        files = ["{}/{}".format(filename, f) for f in os.listdir(filename)]
+    else:
+        files = [filename]
+
+    for filename in files:
+        with open(filename, "rb") as file_:
+            first_bytes = file_.read(byte_size)
+            signature = generate_signature(first_bytes, os_filler, byte_size, warn_type=warn_type)
+            if verify:
+                res = verify_signature(signature)
+                if res:
+                    log.info("signature verified successfully")
+                    if no_save_sig:
+                        log.warn("not saving signature to database, instead outputting as raw text")
+                        print(signature)
+                    else:
+                        return save_sig(signature, config)
                 else:
-                    return save_sig(signature, config)
+                    log.error("unable to verify signature")
+                    return None
             else:
-                log.error("unable to verify signature")
-                return None
-        else:
-            log.warn("skipping signature verification")
-            return signature
+                log.warn("skipping signature verification")
+                return signature
