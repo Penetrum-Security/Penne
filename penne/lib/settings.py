@@ -46,6 +46,9 @@ WELCOME_BANNER = """
 
 
 def download_default_config():
+    """
+    download the default configuration file from the server
+    """
     import requests
     download_url = "https://penetrum.com/penne/penne.json"
     log.debug("downloading default config file from: {}".format(download_url))
@@ -54,6 +57,9 @@ def download_default_config():
 
 
 def init():
+    """
+    initialize the database and configuration file
+    """
     if not os.path.exists(HOME):
         config = download_default_config()
         os.makedirs(HOME)
@@ -73,6 +79,9 @@ def init():
 
 
 def is_pe(filename):
+    """
+    verify the that file is a portable windows executable
+    """
     try:
         # easiest way to check is to use PEfile
         pefile.PE(filename)
@@ -82,6 +91,9 @@ def is_pe(filename):
 
 
 def is_elf(filename):
+    """
+    check if the file is a linux ELF file
+    """
     with open(filename, "rb") as f:
         # i've honestly never seen an ELF file that didn't start with this
         if f.read(4) == b"\x7ELF":
@@ -90,6 +102,9 @@ def is_elf(filename):
 
 
 def is_android(filename):
+    """
+    check if the files is an apk file or not
+    """
     with open(filename, "rb") as f:
         # AndroidManifest.xml
         if b"AndroidManifest.xml" in f.read(4096):
@@ -98,6 +113,9 @@ def is_android(filename):
 
 
 def is_apple(filename):
+    """
+    check if the file is either a .app or a .ipa osX file
+    """
     with open(filename, "rb") as f:
         # magic bytes in .app files
         if f.read(4) == b"\xcf\xfa\xed\xfe":
@@ -111,6 +129,9 @@ def is_apple(filename):
 
 
 def is_doc(filename):
+    """
+    check if the file is a doc file or not
+    """
     with open(filename, "rb") as f:
         if f.read(4) in (b"%PDF", b"\x7b\x72\x74\x66", b"\xdb\xa5\x2d\x00", b"\x0d\x44\x4f\x43"):
             return True
@@ -121,6 +142,9 @@ def is_doc(filename):
 
 
 def file_detection(filename):
+    """
+    detect the file type using the above checks
+    """
     if is_pe(filename):
         os_filter = "Windows"
     elif is_elf(filename):
@@ -137,6 +161,9 @@ def file_detection(filename):
 
 
 def random_string(length=30):
+    """
+    generate a random string
+    """
     import string
 
     retval = []
@@ -147,6 +174,9 @@ def random_string(length=30):
 
 
 def verify_header(filename):
+    """
+    verify the signature file header (pastadb)
+    """
     with open(filename, "rb") as f:
         if f.read(7) == "\x70\x61\x73\x74\x61\x64\x62":
             return True
@@ -154,11 +184,17 @@ def verify_header(filename):
 
 
 def beep():
+    """
+    makes a beep on most systems
+    """
     sys.stdout.write("\a")
     sys.stdout.flush()
     
 
 def unzip_signatures(path):
+    """
+    unzip the signatures to the correct path:
+    """
     unzip_path = "{}/db/unzipped".format(HOME)
     with zipfile.ZipFile(path, "r") as ref:
         ref.extractall("{}/db/unzipped".format(HOME))
@@ -166,6 +202,9 @@ def unzip_signatures(path):
 
 
 def get_hash(filename, hash_type="sha256"):
+    """
+    get a files hash checksum
+    """
     h = hashlib.new(hash_type)
     with open(filename, "rb") as f:
         h.update(f.read())

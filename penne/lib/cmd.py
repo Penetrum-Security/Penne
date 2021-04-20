@@ -31,7 +31,7 @@ class Parser(argparse.ArgumentParser):
             help="Initialize the database and configuration. Can only be run once"
         )
         required.add_argument(
-            "-g", "--sig", action="store_true", default=False, dest="sigtool",
+            "-g", "--sigtool", action="store_true", default=False, dest="sigtool",
             help="Generate a Penne signature for a passed filename or directory of files"
         )
         scanning = parser.add_argument_group("Scanning Arguments")
@@ -69,8 +69,11 @@ class Parser(argparse.ArgumentParser):
 
 
 def verify_args(opts):
+    """
+    verify that the arguments are acceptable to be run together
+    """
     special_opts = (opts.initialize, opts.sigtool, opts.scanner)
-    special_opts_flags = ["-g/--sig", "-t/--initialize", "-s/--scan"]
+    special_opts_flags = ["-g/--sigtool", "-i/--initialize", "-s/--scan"]
     total = 0
     for opt in special_opts:
         if opt:
@@ -86,7 +89,7 @@ def verify_args(opts):
             )
         )
         sys.exit(1)
-    print(WELCOME_BANNER)
     if opts.sigtool and opts.filename is None:
         log.error("must supply a filename with sigtool to generate the signature")
         sys.exit(1)
+    print(WELCOME_BANNER)
