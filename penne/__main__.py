@@ -37,10 +37,11 @@ def main():
             log.info("generating a signature for passed file: {}".format(opts.filename))
             files = [opts.filename]
         for f in files:
-            make_signature(
-                f, byte_size=opts.byteSize, os_filler=opts.osFiller, no_save_sig=opts.noSaveSig,
-                warn_type=opts.warnType
-            )
+            if not os.path.isdir(f):
+                make_signature(
+                    f, byte_size=opts.byteSize, os_filler=opts.osFiller, no_save_sig=opts.noSaveSig,
+                    warn_type=opts.warnType
+                )
 
 
 if __name__ == "__main__":
