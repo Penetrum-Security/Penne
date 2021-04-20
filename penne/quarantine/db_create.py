@@ -1,14 +1,17 @@
-#  Copyright (c) 2021-2025 Penetrum LLC <contact@penetrum.com> (MIT License)
-
+import os
 import sqlite3
 import traceback
+from json import load
 
 from termcolor import cprint
 
 from penne.lib.settings import HOME
 
 
-con = sqlite3.connect("{}/quarantine/data/strainer.sqlite".format(HOME))
+loaded_json = open("{}/penne.json".format(HOME), "r")
+penne_json = load(loaded_json)
+penne_db = "{}/{}".format(penne_json['config']['penne_folders']['database_folder'].format(HOME), "strainer.sqlite")
+con = sqlite3.connect(penne_db)
 cursed = con.cursor()
 
 
@@ -45,8 +48,17 @@ def first_run():
                         failure BOOLEAN NOT NULL DEFAULT 'false',
                         preimum BOOLEAN NOT NULL DEFAULT 'false',
                         FOREIGN KEY (id) REFERENCES penne_pasta(id)
-        )
-                        ''')
+        )''')
+        con.execute('''CREATE TABLE IF NOT EXISTS penne_sigs(
+            id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+            datetime DATETIME DEFAULT CURRENT_TIMESTAMP,
+            os TEXT NOT NULL DEFAULT '-',
+            bytes_read INTEGER NOT NULL DEFAULT 0,
+            warning_type TEXT NOT NULL DEFAULT '-',
+            sig TEXT UNIQUE,
+            sha_hash TEXT UNIQUE,
+            detection_name TEXT NOT NULL DEFAULT 'EVIL AF'
+        )''')
         con.commit()
         return {
             "Error": '',
@@ -88,7 +100,7 @@ def insert_blob(blob_data, blob_name, where_found, original_name, encrypted, nee
         else:
             cursed.execute(
                 '''INSERT INTO penne_pasta(detected_as, original_name, sample_name, sample_origin, sample_blob, encrypted, stored_key, stored_nonce) VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
-                           (detected_as, original_name, blob_name, where_found, blob_data, encrypted, key, nonce,))
+                (detected_as, original_name, blob_name, where_found, blob_data, encrypted, key, nonce,))
     elif isinstance(need_to_upload, bool) and need_to_upload is True:
         cprint("[ !! ] UNKNOWN SAMPLE IS BEING UPLOADED, PLEASE WAIT. [ !! ]", "red", "on_white", attrs=['dark', 'bold'])
         return {
@@ -96,3 +108,22 @@ def insert_blob(blob_data, blob_name, where_found, original_name, encrypted, nee
             'UploadDest': ''
         }
 
+
+
+def create_sig_table():
+    for files in os.listdir(penne_json['config']['penne_folders']['unzipped_sigs'].format(HOME)):
+        full_path = "{0}/{1}".format(penne_json['config']['penne_folders']['unzipped_sigs'].format(HOME), files)
+        with open(full_path) as in_sig:
+            for lines in in_sig.readlines():
+                split_sig = lines.split(':')
+                try:
+                    cursed.execute('''INSERT INTO penne_sigs(os, bytes_read, warning_type, sig, sha_hash) VALUES(?, ?, ?, ?, ?)''',
+                                   (split_sig[1],
+                                    split_sig[2],
+                                    split_sig[3],
+                                    split_sig[4],
+                                    split_sig[5],
+                                    ))
+                    con.commit()
+                except sqlite3.IntegrityError as e:
+                    print(e)
