@@ -46,7 +46,7 @@ class Parser(argparse.ArgumentParser):
                  "a generic unwanted warning", choices=["unwanted", "malware"]
         )
         sigtool.add_argument(
-            "-b", "--byte-size", type=int, default=1024, dest="byteSize",
+            "-b", "--byte-size", type=int, default=1024, dest="byteSize", choices=[1024, 2048, 4096],
             help="Pass the byte size you want to read from the file for signature generation"
         )
         sigtool.add_argument(
