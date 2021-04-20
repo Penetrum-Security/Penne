@@ -23,12 +23,12 @@ def spicy_file(path, filename, detection_type, arch, detected_as):
         cprint("[ !! ] THATS ONE SPICY MEATBALL, TRYING TO COOL IT DOWN [ !! ]", "white", attrs=['dark', 'bold'])
         key = get_random_bytes(32)
         nonce = get_random_bytes(24)
-        cipher = ChaCha20_Poly1305.new(key=key, nonce=nonce)
-        outFile = '{}/quarantine/data/cold_files/K-{}_N-{}_({}).cold'.format(
-            HOME, str(base64.urlsafe_b64encode(key).decode()), str(base64.urlsafe_b64encode(nonce).decode()),
-            filename.replace(".", "_")
-        )
         if key is not None:
+            cipher = ChaCha20_Poly1305.new(key=key, nonce=nonce)
+            outFile = '{}/quarantine/data/cold_files/K-{}_N-{}_({}).cold'.format(
+            HOME, str(base64.urlsafe_b64encode(key).decode()), str(base64.urlsafe_b64encode(nonce).decode()),
+                filename.replace(".", "_")
+            )
             with open(full_path, "rb") as source, open(outFile, "wb") as dest:
                 for line in source.readlines():
                     dest.write(cipher.encrypt(line))
@@ -37,8 +37,8 @@ def spicy_file(path, filename, detection_type, arch, detected_as):
                 "Success": True,
                 "Encrypted": True,
                 "Uploaded": False,
-                "Key": key,
-                "Nonce": nonce,
+                "Key": f"{base64.urlsafe_b64encode(key)}",
+                "Nonce": f"{base64.urlsafe_b64encode(nonce)}",
                 "ColdFile": outFile,
                 "Original_File": filename,
                 "Found_where": path,
@@ -49,7 +49,19 @@ def spicy_file(path, filename, detection_type, arch, detected_as):
         else:
             log.critical("Error when deriving key. The key could not be derived, "
                          "this is a critical error and the application cannot continue.")
-            return "Key Derivation failed, this key cannot be null."
+            return {
+                "Success": False,
+                "Encrypted": False,
+                "Uploaded": False,
+                "Key": None,
+                "Nonce": None,
+                "ColdFile": None,
+                "Original_File": filename,
+                "Found_where": path,
+                "DetectedAs": detection_type,
+                "Cold_Time": datetime.datetime.now(),
+                "Detection": detected_as
+            }
 
 
 def cold_file(sqlitedb, user_upload_consent, encrypted):

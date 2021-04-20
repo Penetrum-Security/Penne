@@ -70,7 +70,7 @@ def check_updates(updated_url, pull_from_git, is_premium):
                 con.commit()
             except sqlite3.OperationalError as e:
                 cprint("[ !! ] THERE WAS AN ERROR CONENCTING TO THE DATABASE, BUILDING AND/OR REBUILDING. [ !! ]",
-                       "red", "on_white", attrs=['dark', 'bold'])
+                       "red", attrs=['dark'])
                 first_run()
                 cursed.execute('''INSERT INTO penne_pulls(last_pull_url, updated_from_github, premium) VALUES (?, ?, ?)''',
                                (updated_url, pull_from_git, is_premium,))
