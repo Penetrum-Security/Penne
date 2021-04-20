@@ -1,6 +1,6 @@
 import sqlite3
-import sys
 import traceback
+
 from termcolor import cprint
 
 from penne.lib.settings import HOME

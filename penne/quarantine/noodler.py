@@ -2,11 +2,9 @@ import base64
 import datetime
 import json
 import os.path
-import sys
 
 from Crypto.Random import get_random_bytes
 from Crypto.Cipher import ChaCha20_Poly1305
-import secrets
 from termcolor import cprint
 from penne.quarantine.db_create import check_updates
 from penne.lib.settings import (
@@ -32,7 +30,6 @@ def spicy_file(path, filename, detection_type, arch, detected_as):
             with open(full_path, "rb") as source, open(outFile, "wb") as dest:
                 for line in source.readlines():
                     dest.write(cipher.encrypt(line))
-            today = datetime.datetime.now()
             return {
                 "Success": True,
                 "Encrypted": True,
@@ -43,7 +40,7 @@ def spicy_file(path, filename, detection_type, arch, detected_as):
                 "Original_File": filename,
                 "Found_where": path,
                 "DetectedAs": detection_type,
-                "Cold_Time": datetime.datetime.strptime(today, "%Y-%m-%b"),
+                "Cold_Time": datetime.datetime.now(),
                 "Detection": detected_as
             }
         else:

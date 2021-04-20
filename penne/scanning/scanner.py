@@ -4,17 +4,26 @@ from __future__ import print_function
 
 import os
 import sys
+import shutil
 import pathlib
 import binascii
 import threading
 import platform
+
+from stat import (
+    S_IREAD,
+    S_IRGRP,
+    S_IROTH
+)
 
 import termcolor
 
 from penne.sigtools.sauce import generate_signature
 from penne.lib.settings import (
     log,
-    beep
+    beep,
+    get_hash,
+    DEFAULT_MOVE_DIRECTORY
 )
 from penne.quarantine.noodler import spicy_file
 
@@ -86,10 +95,12 @@ def do_quarn(f, detection_type, arch, detected_as):
     parts = pathlib.Path(f)
     filename = parts.name
     path = parts.parent
-    print( spicy_file(path, filename, detection_type, arch, detected_as) )
+    quarantine_results = spicy_file(path, filename, detection_type, arch, detected_as)
+    if quarantine_results["Success"]:
+        log.info("file sent to cold storage at: {}".format(quarantine_results["ColdFile"]))
 
 
-def check_signature(filename, loaded_signatures, do_beep=True, move_files=False):
+def check_signature(filename, loaded_signatures, do_beep=True):
     for signature in loaded_signatures:
         with open(signature, "r") as sig:
             _, os_type, bytes_read, flag_type, signature, sha_hash = sig.read().split(":")
@@ -103,9 +114,21 @@ def check_signature(filename, loaded_signatures, do_beep=True, move_files=False)
                             filename, os_type, sha_hash, flag_type.upper()
                         ), "yellow"
                     )
-                    if move_files:
-                        arch = platform.architecture()
-                        do_quarn(filename, flag_type, arch, "EVIL_AF")
+                    arch = platform.architecture()
+                    do_quarn(filename, flag_type, arch, "EVIL_AF")
+                    return True
+    return False
+
+
+def move_detected_file(source):
+    file_dest_hash = get_hash(source)
+    file_dest_path = "{}/{}".format(DEFAULT_MOVE_DIRECTORY, file_dest_hash)
+    shutil.move(source, file_dest_path)
+    try:
+        os.chmod(file_dest_path, S_IREAD|S_IRGRP|S_IROTH)
+    except:
+        log.warn("unable to change file attributes to read only")
+    return file_dest_path
 
 
 def scan(start_dir, signatures, **kwargs):
@@ -122,4 +145,8 @@ def scan(start_dir, signatures, **kwargs):
         for path in paths:
             if not display_only_infected:
                 log.debug("scanning file: {}".format(path))
-            check_signature(path, signatures, do_beep=do_beep, move_files=move_detected)
+            results = check_signature(path, signatures, do_beep=do_beep)
+            if results:
+                if move_detected:
+                    moved_to = move_detected_file(path)
+                    log.info("file marked to be moved and moved to: {}".format(moved_to))

@@ -2,6 +2,7 @@ import os
 import sys
 import json
 import random
+import hashlib
 import logging
 import zipfile
 
@@ -16,6 +17,7 @@ log.addHandler(sh)
 log.handlers[0].setFormatter(logging.Formatter(fmt=log_format, datefmt="%d-%b-%y %H:%M:%S"))
 HOME = os.getenv("PENNE_HOME", "{}/.penne".format(os.path.expanduser('~')))
 CONFIG_FILE_PATH = "{}/penne.json".format(HOME)
+DEFAULT_MOVE_DIRECTORY = "{}/backups".format(HOME)
 VERSION_NUMBERS = "0.1"
 VERSION_STRING = "dev" if VERSION_NUMBERS.count(".") > 2 else "stable"
 SAYING = (
@@ -159,3 +161,10 @@ def unzip_signatures(path):
     with zipfile.ZipFile(path, "r") as ref:
         ref.extractall("{}/db/unzipped".format(HOME))
     return ["{}/{}".format(unzip_path, f) for f in os.listdir(unzip_path) if os.path.isfile("{}/{}".format(unzip_path, f))]
+
+
+def get_hash(filename, hash_type="sha256"):
+    h = hashlib.new(hash_type)
+    with open(filename, "rb") as f:
+        h.update(f.read())
+    return h.hexdigest()
