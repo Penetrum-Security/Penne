@@ -30,11 +30,17 @@ def main():
     if opts.scanner:
         print("scanning")
     if opts.sigtool:
-        log.info("generating signature for passed file: {}".format(opts.filename))
-        make_signature(
-            opts.filename, byte_size=opts.byteSize, os_filler=opts.osFiller, no_save_sig=opts.noSaveSig,
-            warn_type=opts.warnType
-        )
+        if os.path.isdir(opts.filename):
+            files = ["{}/{}".format(opts.filename, f) for f in os.listdir(opts.filename) if os.path.isfile(f)]
+            log.info("generating a total of {} signature(s) for files in {}".format(len(files), opts.filename))
+        else:
+            log.info("generating a signature for passed file: {}".format(opts.filename))
+            files = [opts.filename]
+        for f in files:
+            make_signature(
+                f, byte_size=opts.byteSize, os_filler=opts.osFiller, no_save_sig=opts.noSaveSig,
+                warn_type=opts.warnType
+            )
 
 
 if __name__ == "__main__":
