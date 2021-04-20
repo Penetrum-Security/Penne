@@ -1,3 +1,5 @@
+#  Copyright (c) 20212025 Penetrum LLC <contact@penetrum.com> (MIT License)
+
 from penne.__main__ import main
 
 if __name__ == "__main__":

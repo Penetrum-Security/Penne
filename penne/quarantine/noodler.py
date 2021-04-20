@@ -1,3 +1,5 @@
+#  Copyright (c) 20212025 Penetrum LLC <contact@penetrum.com> (MIT License)
+
 import base64
 import datetime
 import json

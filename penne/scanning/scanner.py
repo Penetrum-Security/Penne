@@ -1,3 +1,5 @@
+#  Copyright (c) 20212025 Penetrum LLC <contact@penetrum.com> (MIT License)
+
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function

@@ -1,3 +1,5 @@
+#  Copyright (c) 20212025 Penetrum LLC <contact@penetrum.com> (MIT License)
+
 import re
 import codecs
 import hashlib
