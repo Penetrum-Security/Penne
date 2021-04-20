@@ -7,6 +7,7 @@ from termcolor import cprint
 
 from penne.lib.settings import HOME
 
+
 penne_json = load(open("{}/penne.json".format(HOME), "r"))
 penne_db = "{}/{}".format(penne_json['config']['penne_folders']['database_folder'].format(HOME), "strainer.sqlite")
 con = sqlite3.connect(penne_db)
@@ -20,6 +21,8 @@ def first_run():
                         datetime DATETIME DEFAULT CURRENT_TIMESTAMP,
                         last_pull_url TEXT NOT NULL DEFAULT '-',
                         updated_from_github BOOLEAN NOT NULL DEFAULT '-',
+                        last_updated_verion TEXT NOT NULL,
+                        last_check_version TEXT NOT NULL,
                         premium BOOLEAN NOT NULL,
                         FOREIGN KEY (premium) REFERENCES penne_stats(preimum)
         )
@@ -57,6 +60,14 @@ def first_run():
             sha_hash TEXT UNIQUE,
             detection_name TEXT NOT NULL DEFAULT 'EVIL AF'
         )''')
+        con.execute('''CREATE TABLE IF NOT EXISTS penne_integ(
+        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+        check_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+        expected_hash TEXT NOT NULL,
+        pulled_hash TEXT NOT NULL,
+        do_they_match BOOLEAN NOT NULL DEFAULT 'False'  
+        )
+        ''')
         con.commit()
         return {
             "Error": '',
@@ -72,30 +83,27 @@ def first_run():
         }
 
 
-def check_updates(updated_url, pull_from_git, is_premium):
-    if updated_url is not None or isinstance(updated_url, str) and isinstance(pull_from_git, bool):
+def check_updates(updated_url, pull_from_git, is_premium, last_version, last_updated_version):
+    if updated_url is not None or isinstance(updated_url, str) and isinstance(pull_from_git, bool) and last_version is not None and last_updated_version is not None:
         if is_premium is not None:
             cprint("[ !! ] CHECKING FOR UPDATES [ !! ]", "red", attrs=['bold'])
             try:
-                cursed.execute(
-                    '''INSERT INTO penne_pulls(last_pull_url, updated_from_github, premium) VALUES (?, ?, ?)''',
-                    (updated_url, pull_from_git, is_premium,))
+                cursed.execute('''INSERT INTO penne_pulls(last_pull_url, updated_from_github, last_updated_verion, last_check_version, premium) VALUES (?, ?, ?, ?, ?)''',
+                               (updated_url, pull_from_git, last_updated_version, last_version, is_premium,))
                 con.commit()
             except sqlite3.OperationalError as e:
                 cprint("[ !! ] THERE WAS AN ERROR CONENCTING TO THE DATABASE, BUILDING AND/OR REBUILDING. [ !! ]",
                        "red", attrs=['dark'])
                 first_run()
-                cursed.execute(
-                    '''INSERT INTO penne_pulls(last_pull_url, updated_from_github, premium) VALUES (?, ?, ?)''',
-                    (updated_url, pull_from_git, is_premium,))
+                cursed.execute('''INSERT INTO penne_pulls(last_pull_url, updated_from_github, last_updated_verion, last_check_version, premium) VALUES (?, ?, ?, ?, ?)''',
+                               (updated_url, pull_from_git, last_updated_version, last_version, is_premium,))
                 con.commit()
     else:
         cprint("[ !! ] COULD NOT CHECK FOR UPDATES [ !! ]", "red", attrs=['dark', 'bold'])
 
 
 def insert_blob(blob_data, blob_name, where_found, original_name, encrypted, need_to_upload, nonce, key, detected_as):
-    if isinstance(blob_data, str) and isinstance(blob_name, str) and isinstance(where_found, str) and isinstance(
-            original_name, str) and isinstance(encrypted, bool) and isinstance(detected_as, str):
+    if isinstance(blob_data, str) and isinstance(blob_name, str) and isinstance(where_found, str) and isinstance(original_name, str) and isinstance(encrypted, bool) and isinstance(detected_as, str):
         if key is None and nonce is None:
             return "Key and Nonce cannot be null"
         else:
@@ -103,12 +111,12 @@ def insert_blob(blob_data, blob_name, where_found, original_name, encrypted, nee
                 '''INSERT INTO penne_pasta(detected_as, original_name, sample_name, sample_origin, sample_blob, encrypted, stored_key, stored_nonce) VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
                 (detected_as, original_name, blob_name, where_found, blob_data, encrypted, key, nonce,))
     elif isinstance(need_to_upload, bool) and need_to_upload is True:
-        cprint("[ !! ] UNKNOWN SAMPLE IS BEING UPLOADED, PLEASE WAIT. [ !! ]", "red", "on_white",
-               attrs=['dark', 'bold'])
+        cprint("[ !! ] UNKNOWN SAMPLE IS BEING UPLOADED, PLEASE WAIT. [ !! ]", "red", "on_white", attrs=['dark', 'bold'])
         return {
             'Upload': True,
             'UploadDest': ''
         }
+
 
 
 def create_sig_table():
@@ -119,19 +127,34 @@ def create_sig_table():
                 for lines in in_sig.readlines():
                     split_sig = lines.split(':')
                     try:
-                        cursed.execute(
-                            '''INSERT INTO penne_sigs(os, bytes_read, warning_type, sig, sha_hash) VALUES(?, ?, ?, ?, ?)''',
-                            (
-                                split_sig[1],
-                                split_sig[2],
-                                split_sig[3],
-                                split_sig[4],
-                                split_sig[5],
-                            ))
+                        cursed.execute('''INSERT INTO penne_sigs(os, bytes_read, warning_type, sig, sha_hash) VALUES(?, ?, ?, ?, ?)''',
+                                       (
+                                           split_sig[1],
+                                           split_sig[2],
+                                           split_sig[3],
+                                           split_sig[4],
+                                           split_sig[5],
+                                       ))
                         con.commit()
                     except sqlite3.IntegrityError as e:
                         cprint("{}\nOffending Hash ->{}\n".format(e, split_sig[5]), "red", attrs=["dark"])
         else:
-            cprint(
-                "[ ++ ] Appears as though a zip file or directory made its way into here... losin my noodle... [ ++ ]",
-                "red", attrs=['dark'])
+            cprint("[ ++ ] Appears as though a zip file or directory made its way into here... losin my noodle... [ ++ ]",
+                   "red", attrs=['dark'])
+
+
+def penne_integ(hash, expected_hash, do_they_match):
+    error = False
+    if hash is not None and expected_hash is not None and do_they_match is not None:
+        if do_they_match is False:
+            error = True
+            cprint("[ !! ] Please verify the signatures manually, as they did not match. This could be any number of"
+                   " things, but it could also mean someone is doing something nasty.", "red", attrs=['dark'])
+        cursed.execute('''INSERT INTO penne_integ(expected_hash, pulled_hash, do_they_match) VALUES (?,?,?)''', (hash, expected_hash, do_they_match))
+        con.commit()
+    return {
+        "Matched": f"{do_they_match}",
+        "Expected Hash": f"{expected_hash}",
+        "Actual Hash": f"{hash}",
+        "Error": f"{error}"
+    }
