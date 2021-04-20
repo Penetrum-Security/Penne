@@ -183,7 +183,7 @@ def is_elf(filename):
     """
     with open(filename, "rb") as f:
         # i've honestly never seen an ELF file that didn't start with this
-        if f.read(4) == b"\x7ELF":
+        if f.read(4) == b"\x7fELF":
             return True
     return False
 
