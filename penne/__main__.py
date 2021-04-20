@@ -31,7 +31,7 @@ def main():
         print("scanning")
     if opts.sigtool:
         if os.path.isdir(opts.filename):
-            files = ["{}/{}".format(opts.filename, f) for f in os.listdir(opts.filename) if os.path.isfile(f)]
+            files = ["{}/{}".format(opts.filename, f) for f in os.listdir(opts.filename)]
             log.info("generating a total of {} signature(s) for files in {}".format(len(files), opts.filename))
         else:
             log.info("generating a signature for passed file: {}".format(opts.filename))
