@@ -118,7 +118,6 @@ def insert_blob(blob_data, blob_name, where_found, original_name, encrypted, nee
         }
 
 
-
 def create_sig_table():
     for files in os.listdir(penne_json['config']['penne_folders']['unzipped_sigs'].format(HOME)):
         if files.endswith('pasta'):
@@ -137,7 +136,10 @@ def create_sig_table():
                                        ))
                         con.commit()
                     except sqlite3.IntegrityError as e:
-                        cprint("{}\nOffending Hash ->{}\n".format(e, split_sig[5]), "red", attrs=["dark"])
+                        pass
+            return {
+                "Success": True,
+            }
         else:
             cprint("[ ++ ] Appears as though a zip file or directory made its way into here... losin my noodle... [ ++ ]",
                    "red", attrs=['dark'])

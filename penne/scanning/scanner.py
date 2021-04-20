@@ -20,7 +20,6 @@ from stat import (
 
 import termcolor
 
-from penne.sigtools.sauce import generate_signature
 from penne.lib.settings import (
     log,
     beep,

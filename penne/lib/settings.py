@@ -9,6 +9,7 @@ import logging
 import zipfile
 
 import pefile
+import requests
 
 
 log_format = "[ %(levelname)s ][ %(asctime)s ] %(message)s"
@@ -20,6 +21,7 @@ log.handlers[0].setFormatter(logging.Formatter(fmt=log_format, datefmt="%d-%b-%y
 HOME = os.getenv("PENNE_HOME", "{}/.penne".format(os.path.expanduser('~')))
 CONFIG_FILE_PATH = "{}/penne.json".format(HOME)
 DEFAULT_MOVE_DIRECTORY = "{}/backups".format(HOME)
+HASHSUM_FILE = "{}/hashsums.txt".format(HOME)
 VERSION_NUMBERS = "0.1"
 VERSION_STRING = "dev" if VERSION_NUMBERS.count(".") > 2 else "stable"
 SAYING = (
@@ -49,17 +51,86 @@ def download_default_config():
     """
     download the default configuration file from the server
     """
-    import requests
     download_url = "https://penetrum.com/penne/penne.json"
     log.debug("downloading default config file from: {}".format(download_url))
     req = requests.get(download_url)
     return req.json()
 
 
+def download_hashsums():
+    """
+    downloads the hashsum file in order to verify that that files downloaded from the server are correct
+    """
+    url = "https://penetrum.com/penne/hashsums.txt"
+    req = requests.get(url)
+    log.info("downloading hashsum file into: {}".format(HASHSUM_FILE))
+    with open(HASHSUM_FILE, "a+") as f:
+        f.write(req.text)
+    return HASHSUM_FILE
+
+
+def download_default_signatures():
+    """
+    downloads the signatures that are provided with Penne AV
+    """
+    config = init()
+    urls = [
+        "https://penetrum.com/penne/penne_signatures_honeypot.zip"
+    ]
+    for url in urls:
+        log.info("downloading signature file from: {}".format(url))
+        file_path = "{}/{}".format(config["config"]["penne_folders"]["database_folder"].format(HOME), url.split("/")[-1])
+        if not os.path.exists(file_path):
+            with requests.get(url, stream=True) as stream:
+                stream.raise_for_status()
+                with open(file_path, "wb") as file_:
+                    for chunk in stream.iter_content(chunk_size=8192):
+                        file_.write(chunk)
+        else:
+            log.warning("file exists, skipping")
+    return [
+        "{}/{}".format(config["config"]["penne_folders"]["database_folder"].format(HOME), f) for f in os.listdir(config["config"]["penne_folders"]["database_folder"].format(HOME)) \
+        if os.path.isfile("{}/{}".format(config["config"]["penne_folders"]["database_folder"].format(HOME), f))
+    ]
+
+
+def verify_files(filepaths, hashsum_path):
+    """
+    check the files against the hashsums
+    """
+    bad, good = set(), set()
+    for item in filepaths:
+        if ".sqlite" not in item:
+            with open(hashsum_path) as hashsums:
+                for sum_ in hashsums.readlines():
+                    data = sum_.split(" ")
+                    hashsum = data[0]
+                    downloaded_hash = get_hash(item)
+                    if not hashsum == downloaded_hash:
+                        log.error("file: {} hashsum ({}) does not match verified hashsum {}".format(
+                            item, downloaded_hash, hashsum
+                        ))
+                        bad.add(item)
+                    else:
+                        good.add(item)
+    return list(good), list(bad)
+
+
+def initialize_database(config):
+    from penne.quarantine.db_create import first_run, create_sig_table
+
+    log.info("generating database")
+    first_run()
+    log.info("database generated successfully, generating signature tables")
+    create_sig_table(config['config']['penne_folders']['unzipped_sigs'].format(HOME))
+    log.info("signature tables generated successfully")
+
+
 def init():
     """
     initialize the database and configuration file
     """
+
     if not os.path.exists(HOME):
         config = download_default_config()
         os.makedirs(HOME)
@@ -70,8 +141,20 @@ def init():
             if not os.path.exists(folders[key]):
                 os.makedirs(folders[key].format(HOME))
         log.info("copying default config file to {}".format(config_file_path.format(HOME)))
+
         with open(CONFIG_FILE_PATH, "a+") as conf:
             json.dump(config, conf)
+        download_hashsums()
+        downloads_files = download_default_signatures()
+        files = verify_files(downloads_files, HASHSUM_FILE)
+        bad_files = files[1]
+        for item in bad_files:
+            log.warning("removing bad file: {}".format(item))
+            os.remove(item)
+        good_files = files[0]
+        for item in good_files:
+            unzip_signatures(item)
+        initialize_database(config)
         return config
     else:
         with open(CONFIG_FILE_PATH) as data:
@@ -195,6 +278,7 @@ def unzip_signatures(path):
     """
     unzip the signatures to the correct path:
     """
+    log.info("unzipping signatures from path: {}".format(path))
     unzip_path = "{}/db/unzipped".format(HOME)
     with zipfile.ZipFile(path, "r") as ref:
         ref.extractall("{}/db/unzipped".format(HOME))
