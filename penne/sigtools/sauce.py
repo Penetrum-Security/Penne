@@ -14,6 +14,9 @@ from penne.lib.settings import (
 
 
 def verify_signature(sig):
+    """
+    verify that the Penne signature is an acceptable format
+    """
     filler_acceptable = ("windows", "linux", "apple", "android", "doc", "ios", "unknown")
     sha_identifier = re.compile("^[a-fA-F0-9]{64}$")
     pieces = sig.split(":")
@@ -33,6 +36,9 @@ def verify_signature(sig):
 
 
 def save_sig(sig, conf):
+    """
+    save the signature into the database path under user_defined
+    """
     filename = "{}/{}.pasta".format(conf["config"]["penne_folders"]["user_defined"].format(HOME), random_string())
     log.info("saving signature to user defined database under: {}".format(filename))
     with open(filename, "wb") as file_:
@@ -40,6 +46,9 @@ def save_sig(sig, conf):
 
 
 def generate_signature(sig, filler, bytes_size, warn_type="unwanted"):
+    """
+    generates the signature in the correct format
+    """
     sha256 = hashlib.sha256()
     sha256.update(sig)
     hashsum = sha256.hexdigest()
@@ -49,6 +58,9 @@ def generate_signature(sig, filler, bytes_size, warn_type="unwanted"):
 
 
 def make_signature(filename, **kwargs):
+    """
+    main function that ties all of the above together
+    """
     verify = kwargs.get("verify", True)
     byte_size = kwargs.get("byte_size", 1024)
     os_filler = kwargs.get("os_filler", "DETECT")
@@ -68,8 +80,8 @@ def make_signature(filename, **kwargs):
             if res:
                 log.info("signature verified successfully")
                 if no_save_sig:
-                    log.warn("not saving signature to database file, instead outputting as raw text")
-                    return signature
+                    log.warn("not saving signature to database, instead outputting as raw text")
+                    print(signature)
                 else:
                     return save_sig(signature, config)
             else:

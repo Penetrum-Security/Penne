@@ -2,14 +2,22 @@
 
 from setuptools import setup, find_packages
 
+from penne import (
+    __version__,
+    __contact__,
+    __author__,
+    __website__,
+    __license__
+)
+
 setup(
-    name='penne',
-    version='0.1',
+    name='penneav',
+    version=__version__,
     packages=find_packages(),
-    url='https://penetrum.com',
-    license='MIT',
-    author='Penetrum LLC',
-    author_email='contact@penetrum.com',
+    url=__website__,
+    license=__license__,
+    author=__author__,
+    author_email=__contact__,
     description='Penne AV is a cross platform AV solution written in python for portability and ease',
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
@@ -19,5 +27,5 @@ setup(
         "Source Code": "https://github.com/Penetrum-Security/Penne",
     },
     install_requires=open("requirements.txt").read().split("\n"),
-    scripts=["penne/bin/penne"]
+    scripts=["penneav"]
 )
