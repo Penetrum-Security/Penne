@@ -3,8 +3,10 @@ import sys
 import traceback
 from termcolor import cprint
 
+from penne.lib.settings import HOME
 
-con = sqlite3.connect("data/strainer.sqlite")
+
+con = sqlite3.connect("{}/quarantine/data/strainer.sqlite".format(HOME))
 cursed = con.cursor()
 
 

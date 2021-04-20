@@ -3,6 +3,7 @@ import sys
 import json
 import random
 import logging
+import zipfile
 
 import pefile
 
@@ -151,3 +152,10 @@ def verify_header(filename):
 def beep():
     sys.stdout.write("\a")
     sys.stdout.flush()
+    
+
+def unzip_signatures(path):
+    unzip_path = "{}/db/unzipped".format(HOME)
+    with zipfile.ZipFile(path, "r") as ref:
+        ref.extractall("{}/db/unzipped".format(HOME))
+    return ["{}/{}".format(unzip_path, f) for f in os.listdir(unzip_path) if os.path.isfile("{}/{}".format(unzip_path, f))]

@@ -33,6 +33,10 @@ class Parser(argparse.ArgumentParser):
             help="Generate a Penne signature for a passed filename or directory of files"
         )
         scanning = parser.add_argument_group("Scanning Arguments")
+        scanning.add_argument(
+            "-M", "--move", action="store_true", default=False, dest="moveFiles",
+            help="Move files as they're detected (BE CAREFUL WITH THIS)"
+        )
         sigtool = parser.add_argument_group("Sigtool Arguments")
         sigtool.add_argument(
             "-w", "--warning", dest="warnType", default="DETECT",
