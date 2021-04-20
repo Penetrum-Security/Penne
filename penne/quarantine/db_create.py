@@ -8,8 +8,7 @@ from termcolor import cprint
 from penne.lib.settings import HOME
 
 
-loaded_json = open("{}/penne.json".format(HOME), "r")
-penne_json = load(loaded_json)
+penne_json = load(open("{}/penne.json".format(HOME), "r"))
 penne_db = "{}/{}".format(penne_json['config']['penne_folders']['database_folder'].format(HOME), "strainer.sqlite")
 con = sqlite3.connect(penne_db)
 cursed = con.cursor()
@@ -118,12 +117,14 @@ def create_sig_table():
                 split_sig = lines.split(':')
                 try:
                     cursed.execute('''INSERT INTO penne_sigs(os, bytes_read, warning_type, sig, sha_hash) VALUES(?, ?, ?, ?, ?)''',
-                                   (split_sig[1],
-                                    split_sig[2],
-                                    split_sig[3],
-                                    split_sig[4],
-                                    split_sig[5],
-                                    ))
+                                   (
+                                       split_sig[1],
+                                       split_sig[2],
+                                       split_sig[3],
+                                       split_sig[4],
+                                       split_sig[5],
+                                   ))
                     con.commit()
                 except sqlite3.IntegrityError as e:
+                    print("Offending Hash: {}".format(split_sig[5]))
                     print(e)
