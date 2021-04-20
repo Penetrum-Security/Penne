@@ -120,10 +120,18 @@ def initialize_database(config):
     from penne.quarantine.db_create import first_run, create_sig_table
 
     log.info("generating database")
-    first_run()
-    log.info("database generated successfully, generating signature tables")
-    create_sig_table(config['config']['penne_folders']['unzipped_sigs'].format(HOME))
-    log.info("signature tables generated successfully")
+    results = first_run()
+    if results["Success"] == True:
+        log.info("database generated successfully, generating signature tables")
+    else:
+        log.warning("Database was not successfully generated. Please double check as to why, or report it as a bug.\n"
+                    "{0}\n{1}".format(results["TraceBack"], results["Error"]))
+
+    result = create_sig_table(config['config']['penne_folders']['unzipped_sigs'].format(HOME))
+    if result["Success"] == True:
+        log.info("signature tables generated successfully")
+    else:
+        log.warning("Could not create signature table, please double check the db was created, or report as a bug.")
 
 
 def init():
