@@ -103,17 +103,12 @@ def verify_files(filepaths, hashsum_path):
     for item in filepaths:
         if ".sqlite" not in item:
             with open(hashsum_path) as hashsums:
-                for sum_ in hashsums.readlines():
-                    data = sum_.split(" ")
-                    hashsum = data[0]
-                    downloaded_hash = get_hash(item)
-                    if not hashsum == downloaded_hash:
-                        log.error("file: {} hashsum ({}) does not match verified hashsum {}".format(
-                            item, downloaded_hash, hashsum
-                        ))
-                        bad.add(item)
-                    else:
-                        good.add(item)
+                downloaded_hash = get_hash(item)
+                if downloaded_hash not in hashsums.read():
+                    log.error("file: {} hashsum ({}) does not match verified hashsums".format(item, downloaded_hash))
+                    bad.add(item)
+                else:
+                    good.add(item)
     return list(good), list(bad)
 
 
