@@ -68,8 +68,8 @@ def make_signature(filename, **kwargs):
             if res:
                 log.info("signature verified successfully")
                 if no_save_sig:
-                    log.warn("not saving signature to database file, instead outputting as raw text")
-                    return signature
+                    log.warn("not saving signature to database, instead outputting as raw text")
+                    print(signature)
                 else:
                     return save_sig(signature, config)
             else:

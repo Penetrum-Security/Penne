@@ -17,8 +17,8 @@ class Parser(argparse.ArgumentParser):
     @staticmethod
     def optparse():
         parser = argparse.ArgumentParser(
-            prog="penne",
-            usage="penne -[s|i|g] -[args]",
+            prog="penneav",
+            usage="{} -[s|i|g] -[args]".format(__name__),
             description="PenneAV is a cross compatible opensource Antivirus solution"
         )
         required = parser.add_argument_group("Required Arguments")
@@ -43,28 +43,28 @@ class Parser(argparse.ArgumentParser):
         sigtool.add_argument(
             "-w", "--warning", dest="warnType", default="DETECT",
             help="Pass your own warning type by default Penne will try to detect the warning type with a default of "
-                 "a generic unwanted warning"
+                 "a generic unwanted warning", choices=["unwanted", "malware"]
         )
-        misc = parser.add_argument_group("Misc Arguments")
-        misc.add_argument("-f", "--filename", dest="filename", help="Pass a filename to use", default=None)
-        misc.add_argument(
+        sigtool.add_argument(
             "-b", "--byte-size", type=int, default=1024, dest="byteSize",
             help="Pass the byte size you want to read from the file for signature generation"
         )
-        misc.add_argument(
+        sigtool.add_argument(
             "-V", "--verify", dest="verify", default=True, action="store_true",
             help="If you don't want to verify your signature, pass this switch to turn off the optimization"
         )
-        misc.add_argument(
+        sigtool.add_argument(
             "-o", "--os-filler", default="DETECT", dest="osFiller", metavar="OS-TYPE",
             help="Pass what operating system this support this signature should use. If nothing is passed Penne "
                  "will try to detect the file"
         )
-        misc.add_argument(
+        sigtool.add_argument(
             "--no-save", action="store_true", default=False, dest="noSaveSig",
             help="Pass this flag to output the signature as raw text instead of saving to a database file under "
                  "PENNE_HOME/db/user_defined"
         )
+        misc = parser.add_argument_group("Misc Arguments")
+        misc.add_argument("-f", "--filename", dest="filename", help="Pass a filename to use", default=None)
         return parser.parse_args()
 
 

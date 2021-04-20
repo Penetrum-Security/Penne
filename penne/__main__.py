@@ -31,10 +31,10 @@ def main():
         print("scanning")
     if opts.sigtool:
         log.info("generating signature for passed file: {}".format(opts.filename))
-        signature = make_signature(
-            opts.filename, byte_size=opts.byteSize, os_filler=opts.osFiller, no_save_sig=opts.noSaveSig
+        make_signature(
+            opts.filename, byte_size=opts.byteSize, os_filler=opts.osFiller, no_save_sig=opts.noSaveSig,
+            warn_type=opts.warnType
         )
-        print(signature)
 
 
 if __name__ == "__main__":
