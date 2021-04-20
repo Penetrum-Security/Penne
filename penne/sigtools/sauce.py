@@ -78,8 +78,8 @@ def make_signature(filename, **kwargs):
     else:
         files = [filename]
 
-    for filename in files:
-        with open(filename, "rb") as file_:
+    for f in files:
+        with open(f, "rb") as file_:
             first_bytes = file_.read(byte_size)
             signature = generate_signature(first_bytes, os_filler, byte_size, warn_type=warn_type)
             if verify:
