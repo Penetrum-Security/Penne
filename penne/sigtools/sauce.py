@@ -74,7 +74,7 @@ def make_signature(filename, **kwargs):
     config = init()
 
     if os.path.isdir(filename):
-        files = ["{}/{}".format(filename, f) for f in os.listdir(filename)]
+        files = ["{}/{}".format(filename, f) for f in os.listdir(filename) if os.path.isfile("{}/{}".format(filename, f))]
     else:
         files = [filename]
 
