@@ -75,7 +75,8 @@ def download_default_signatures():
     """
     config = init()
     urls = [
-        "https://penetrum.com/penne/penne_signatures_honeypot.zip"
+        "https://penetrum.com/penne/penne_signatures_honeypot.zip",
+        "https://penetrum.com/penne/penne_penetrum_samples.zip"
     ]
     for url in urls:
         log.info("downloading signature file from: {}".format(url))
