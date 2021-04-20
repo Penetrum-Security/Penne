@@ -5,12 +5,8 @@ from termcolor import cprint
 
 from penne.lib.settings import HOME
 
-<<<<<<< HEAD
 
 con = sqlite3.connect("{}/quarantine/data/strainer.sqlite".format(HOME))
-=======
-con = sqlite3.connect("penne/quarantine/data/strainer.sqlite")
->>>>>>> a890880c34c768c45ed7116d30dabdb7beded3d2
 cursed = con.cursor()
 
 
