@@ -154,7 +154,8 @@ def penne_integ(hash, expected_hash, do_they_match):
             error = True
             cprint("[ !! ] Please verify the signatures manually, as they did not match. This could be any number of"
                    " things, but it could also mean someone is doing something nasty.", "red", attrs=['dark'])
-        cursed.execute('''INSERT INTO penne_integ(expected_hash, pulled_hash, do_they_match) VALUES (?,?,?)''', (hash, expected_hash, do_they_match))
+        cursed.execute('''INSERT INTO penne_integ(expected_hash, pulled_hash, do_they_match) VALUES (?,?,?)''',
+                       (hash, expected_hash, do_they_match))
         con.commit()
     return {
         "Matched": f"{do_they_match}",
