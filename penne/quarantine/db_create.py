@@ -172,19 +172,15 @@ def pull_sig(sample_sig, size):
             return {
                 "Success": True,
                 "Identified": True,
-                "Signature": rows[5],
-                "Hash": rows[6],
-                "Detection Type": rows[7],
-                "Bytes To Read": rows[3],
-                "Warning Type": rows[4]
+                'OS': rows[2],
+                'Warning': rows[4],
+                'Hash': rows[6]
             }
         else:
-            return{
-                "Success": True,
-                "Identified": True,
-                "Signature": None,
-                "Hash": None,
-                "Detection Type": None,
-                "Bytes To Read": None,
-                "Warning Type": None
+            return {
+                "Success": False,
+                "Identified": False,
+                'OS': None,
+                'Warning': None,
+                'Hash': None
             }

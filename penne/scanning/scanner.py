@@ -27,6 +27,7 @@ from penne.lib.settings import (
     DEFAULT_MOVE_DIRECTORY
 )
 from penne.quarantine.noodler import spicy_file
+from penne.quarantine.db_create import pull_sig
 
 
 def walk(top, threads=12):
@@ -101,23 +102,19 @@ def do_quarn(f, detection_type, arch, detected_as):
         log.info("file sent to cold storage at: {}".format(quarantine_results["ColdFile"]))
 
 
-def check_signature(filename, loaded_signatures, do_beep=True):
-    for signature in loaded_signatures:
-        with open(signature, "r") as sig:
-            _, os_type, bytes_read, flag_type, signature, sha_hash = sig.read().split(":")
-            with open(filename, "rb") as to_scan:
-                data = to_scan.read(int(bytes_read))
-                if data == binascii.unhexlify(signature):
-                    if do_beep:
-                        beep()
-                    termcolor.cprint(
-                        "Match found\nPath: {}\nOS type: {}\nSHA-256: {}\nWarning type: {}".format(
-                            filename, os_type, sha_hash, flag_type.upper()
-                        ), "yellow"
+def check_signature(filename, do_beep=True):
+    byte_sizes = (1024, 2048, 4096)
+    with open(filename, "rb") as f:
+        for b in byte_sizes:
+            data = f.read(b)
+            matches = pull_sig(data, b)
+            if matches['Success']:
+                termcolor.cprint(
+                    "Match found:\nPath: {}\nOS Type: {}\nSHA-256: {}\nWarning Type: {}".format(
+                        filename, matches['OS'], matches['Hash'], matches['Warning']
                     )
-                    arch = platform.architecture()
-                    do_quarn(filename, flag_type, arch, "EVIL_AF")
-                    return True
+                )
+                return True
     return False
 
 
@@ -146,7 +143,7 @@ def scan(start_dir, signatures, **kwargs):
         for path in paths:
             if not display_only_infected:
                 log.debug("scanning file: {}".format(path))
-            results = check_signature(path, signatures, do_beep=do_beep)
+            results = check_signature(path, do_beep=do_beep)
             if results:
                 if move_detected:
                     moved_to = move_detected_file(path)
