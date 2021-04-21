@@ -6,7 +6,6 @@ from json import load
 from termcolor import cprint
 
 from penne.lib.settings import HOME
-from penne.lib.spinner import Spinner
 
 penne_json = load(open("{}/penne.json".format(HOME), "r"))
 penne_db = "{}/{}".format(penne_json[ 'config' ][ 'penne_folders' ][ 'database_folder' ].format(HOME),
@@ -85,9 +84,8 @@ def first_run():
 
 
 def check_updates(updated_url, pull_from_git, is_premium, last_version, last_updated_version):
-    if updated_url is not None or isinstance(updated_url, str) and isinstance(pull_from_git,
-                                                                              bool) and last_version is not None and \
-            last_updated_version is not None:
+    if updated_url is not None or isinstance(updated_url, str) and \
+            isinstance(pull_from_git, bool) and last_version is not None and last_updated_version is not None:
         if is_premium is not None:
             cprint("[ !! ] CHECKING FOR UPDATES [ !! ]", "red", attrs=[ 'bold' ])
             try:
@@ -111,20 +109,60 @@ def check_updates(updated_url, pull_from_git, is_premium, last_version, last_upd
 
 def insert_blob(blob_data, blob_name, where_found, original_name, encrypted, need_to_upload, nonce, key, detected_as):
     if isinstance(blob_data, str) and isinstance(blob_name, str) and isinstance(where_found, str) and isinstance(
-            original_name, str) and isinstance(encrypted, bool) and isinstance(detected_as, str):
-        if key is None and nonce is None:
-            return "Key and Nonce cannot be null"
-        else:
+            original_name, str) and isinstance(encrypted, bool) and isinstance(detected_as, str) \
+            and isinstance(need_to_upload, dict):
+        if need_to_upload['Upload'] is False:
             cursed.execute(
                 '''INSERT INTO penne_pasta(detected_as, original_name, sample_name, sample_origin, sample_blob, 
                 encrypted, stored_key, stored_nonce) VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
                 (detected_as, original_name, blob_name, where_found, blob_data, encrypted, key, nonce,))
-    elif isinstance(need_to_upload, bool) and need_to_upload is True:
-        cprint("[ !! ] UNKNOWN SAMPLE IS BEING UPLOADED, PLEASE WAIT. [ !! ]", "red", "on_white",
-               attrs=[ 'dark', 'bold' ])
+            con.commit()
+            return {
+                "Success": True,
+                "Inserted": {
+                    "Blob_Data": "{}".format(blob_data),
+                    "blob_name": "{}".format(blob_name),
+                    "where_found": "{}".format(where_found),
+                    "original_name": "{}".format(original_name),
+                    "encrypted": "{}".format(encrypted),
+                    "need_to_upload": "{}".format(detected_as),
+                    "nonce": "{}".format(nonce),
+                    "key": "{}".format(key),
+                    "detected_as": "{}".format(detected_as),
+                }
+            }
+        elif need_to_upload["Upload"] is True:
+            cprint("[ !! ] UNKNOWN SAMPLE IS BEING UPLOADED, PLEASE WAIT. [ !! ]", "red", "on_white",
+                   attrs=[ 'dark', 'bold' ])
+            return {
+                "Success": True,
+                "UploadDest": '{}'.format(need_to_upload['Upload_Where'])
+            }
+    else:
         return {
-            'Upload': True,
-            'UploadDest': ''
+            "Success": False,
+            "Expected": {
+                "Blob_Data": type(str(blob_data)),
+                "blob_name": type(str(blob_name)),
+                "where_found": type(str(where_found)),
+                "original_name": type(str(original_name)),
+                "encrypted": type(bool(encrypted)),
+                "need_to_upload": type(dict(detected_as)),
+                "nonce": type(str(nonce)),
+                "key": type(str(key)),
+                "detected_as": type(str(detected_as)),
+            },
+            "Recieved": {
+                "Blob_Data": type(blob_data),
+                "blob_name": type(blob_name),
+                "where_found": type(where_found),
+                "original_name": type(original_name),
+                "encrypted": type(encrypted),
+                "need_to_upload": type(detected_as),
+                "nonce": type(nonce),
+                "key": type(key),
+                "detected_as": type(detected_as),
+            }
         }
 
 
@@ -181,7 +219,6 @@ def penne_integ(hash_of, expected_hash, do_they_match):
 
 def pull_sig(sample_sig, size):
     if sample_sig is not None and size is not None:
-        with Spinner():
             cursed.execute('''SELECT * from penne_sigs WHERE bytes_read = (?) and sig = (?)''', (size, sample_sig,))
             rows = cursed.fetchone()
             if len(rows) != 0 and rows[ 5 ] is not None:
@@ -200,3 +237,4 @@ def pull_sig(sample_sig, size):
                     'Warning': None,
                     'Hash': None
                 }
+
