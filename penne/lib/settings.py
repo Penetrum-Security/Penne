@@ -10,7 +10,7 @@ import zipfile
 
 import pefile
 import requests
-
+from penne.lib.spinner import Spinner
 
 log_format = "[ %(levelname)s ][ %(asctime)s ] %(message)s"
 log = logging.getLogger(__name__)
@@ -80,7 +80,8 @@ def download_default_signatures():
     ]
     for url in urls:
         log.info("downloading signature file from: {}".format(url))
-        file_path = "{}/{}".format(config["config"]["penne_folders"]["database_folder"].format(HOME), url.split("/")[-1])
+        file_path = "{}/{}".format(config["config"]["penne_folders"]["database_folder"].format(HOME),
+                                   url.split("/")[-1])
         if not os.path.exists(file_path):
             with requests.get(url, stream=True) as stream:
                 stream.raise_for_status()
@@ -90,7 +91,8 @@ def download_default_signatures():
         else:
             log.warning("file exists, skipping")
     return [
-        "{}/{}".format(config["config"]["penne_folders"]["database_folder"].format(HOME), f) for f in os.listdir(config["config"]["penne_folders"]["database_folder"].format(HOME)) \
+        "{}/{}".format(config["config"]["penne_folders"]["database_folder"].format(HOME), f) for f in
+        os.listdir(config["config"]["penne_folders"]["database_folder"].format(HOME)) \
         if os.path.isfile("{}/{}".format(config["config"]["penne_folders"]["database_folder"].format(HOME), f))
     ]
 
@@ -116,18 +118,24 @@ def initialize_database(config):
     from penne.quarantine.db_create import first_run, create_sig_table
 
     log.info("generating database")
-    results = first_run()
-    if results["Success"]:
-        log.info("database generated successfully, generating signature tables")
-    else:
-        log.warning("Database was not successfully generated. Please double check as to why, or report it as a bug.\n"
-                    "{0}\n{1}".format(results["TraceBack"], results["Error"]))
+    try:
+        results = first_run()
+        if results["Success"]:
+            log.info("database generated successfully, generating signature tables")
+        else:
+            log.warning(
+                "Database was not successfully generated. Please double check as to why, or report it as a bug.\n"
+                "{0}\n{1}".format(results["TraceBack"], results["Error"]))
 
-    result = create_sig_table(config['config']['penne_folders']['unzipped_sigs'].format(HOME))
-    if result["Success"]:
-        log.info("signature tables generated successfully")
-    else:
-        log.warning("Could not create signature table, please double check the db was created, or report as a bug.")
+        result = create_sig_table(config['config']['penne_folders']['unzipped_sigs'].format(HOME))
+        if result["Success"]:
+            log.info(
+                "signature tables generated successfully total signatures in DB: {}".format(
+                    result['Total Sigs in DB']))
+        else:
+            log.warning("Could not create signature table, please double check the db was created, or report as a bug.")
+    except TypeError:
+        log.warning("Could not confirm that the DB was created properly. Please manually verify.")
 
 
 def init():
@@ -162,9 +170,11 @@ def init():
             log.warning("removing bad file: {}".format(item))
             os.remove(item)
         good_files = files[0]
-        for item in good_files:
-            unzip_signatures(item)
-        initialize_database(config)
+        with Spinner():
+            for item in good_files:
+                unzip_signatures(item)
+        with Spinner():
+            initialize_database(config)
         return config
     else:
         with open(CONFIG_FILE_PATH) as data:
@@ -292,7 +302,8 @@ def unzip_signatures(path):
     unzip_path = "{}/db/unzipped".format(HOME)
     with zipfile.ZipFile(path, "r") as ref:
         ref.extractall("{}/db/unzipped".format(HOME))
-    return ["{}/{}".format(unzip_path, f) for f in os.listdir(unzip_path) if os.path.isfile("{}/{}".format(unzip_path, f))]
+    return ["{}/{}".format(unzip_path, f) for f in os.listdir(unzip_path) if
+            os.path.isfile("{}/{}".format(unzip_path, f))]
 
 
 def get_hash(filename, hash_type="sha256"):

@@ -7,6 +7,7 @@ from json import load
 from termcolor import cprint
 
 from penne.lib.settings import HOME
+from penne.lib.spinner import Spinner
 
 
 penne_json = load(open("{}/penne.json".format(HOME), "r"))
@@ -121,27 +122,33 @@ def insert_blob(blob_data, blob_name, where_found, original_name, encrypted, nee
 
 
 def create_sig_table(path):
-    for files in os.listdir(path):
-        if files.endswith('pasta'):
-            full_path = "{0}/{1}".format(path, files)
-            with open(full_path) as in_sig:
-                for lines in in_sig.readlines():
-                    split_sig = lines.split(':')
-                    try:
-                        cursed.execute('''INSERT INTO penne_sigs(os, bytes_read, warning_type, sig, sha_hash) VALUES(?, ?, ?, ?, ?)''',
-                                       (
-                                           split_sig[1],
-                                           split_sig[2],
-                                           split_sig[3],
-                                           split_sig[4],
-                                           split_sig[5],
-                                       ))
-                        con.commit()
-                    except sqlite3.IntegrityError as e:
-                        cprint("{}\nOffending Hash ->{}\n".format(e, split_sig[5]), "red", attrs=["dark"])
-        else:
-            cprint("[ ++ ] Appears as though a zip file or directory made its way into here... losin my noodle... [ ++ ]",
-                   "red", attrs=['dark'])
+        for files in os.listdir(path):
+            if files.endswith('pasta'):
+                full_path = "{0}/{1}".format(path, files)
+                with open(full_path) as in_sig:
+                    for lines in in_sig.readlines():
+                        split_sig = lines.split(':')
+                        try:
+                            cursed.execute('''INSERT INTO penne_sigs(os, bytes_read, warning_type, sig, sha_hash) VALUES(?, ?, ?, ?, ?)''',
+                                           (
+                                               split_sig[1],
+                                               split_sig[2],
+                                               split_sig[3],
+                                               split_sig[4],
+                                               split_sig[5],
+                                           ))
+                        except sqlite3.IntegrityError:
+                            continue
+            else:
+                cprint("[ ++ ] Appears as though a zip file or directory made its way into here... losin my noodle... [ ++ ]",
+                       "red", attrs=['dark'])
+        con.commit()
+        cursed.execute('''SELECT COUNT(id) FROM penne_sigs''')
+        af = cursed.fetchone()
+        return {
+            "Success": True,
+            "Total Sigs in DB": "{}".format(af[0])
+        }
 
 
 def penne_integ(hash, expected_hash, do_they_match):
@@ -163,21 +170,22 @@ def penne_integ(hash, expected_hash, do_they_match):
 
 def pull_sig(sample_sig, size):
     if sample_sig is not None and size is not None:
-        cursed.execute('''SELECT * from penne_sigs WHERE bytes_read = (?) and sig = (?)''', (size, sample_sig,))
-        rows = cursed.fetchone()
-        if len(rows) != 0 and rows[5] is not None:
-            return {
-                "Success": True,
-                "Identified": True,
-                'OS': rows[2],
-                'Warning': rows[4],
-                'Hash': rows[6]
-            }
-        else:
-            return {
-                "Success": False,
-                "Identified": False,
-                'OS': None,
-                'Warning': None,
-                'Hash': None
-            }
+        with Spinner():
+            cursed.execute('''SELECT * from penne_sigs WHERE bytes_read = (?) and sig = (?)''', (size, sample_sig,))
+            rows = cursed.fetchone()
+            if len(rows) != 0 and rows[5] is not None:
+                return {
+                    "Success": True,
+                    "Identified": True,
+                    'OS': rows[2],
+                    'Warning': rows[4],
+                    'Hash': rows[6]
+                }
+            else:
+                return {
+                    "Success": False,
+                    "Identified": False,
+                    'OS': None,
+                    'Warning': None,
+                    'Hash': None
+                }
