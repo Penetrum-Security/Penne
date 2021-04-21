@@ -1,3 +1,4 @@
+import logging
 import os
 import sqlite3
 import traceback
@@ -5,7 +6,7 @@ from json import load
 
 from termcolor import cprint
 
-from penne.lib.settings import HOME
+from penne.lib.settings import HOME,log
 
 
 penne_json = load(open("{}/penne.json".format(HOME), "r"))
@@ -118,11 +119,12 @@ def insert_blob(blob_data, blob_name, where_found, original_name, encrypted, nee
         }
 
 
+
 def create_sig_table(path):
-    processed = set()
     for files in os.listdir(path):
         if files.endswith('pasta'):
             full_path = "{0}/{1}".format(path, files)
+            log.info("Found Signature file: {}".format(full_path))
             with open(full_path) as in_sig:
                 for lines in in_sig.readlines():
                     split_sig = lines.split(':')
@@ -135,33 +137,29 @@ def create_sig_table(path):
                                            split_sig[4],
                                            split_sig[5],
                                        ))
+                        log.info("Signature: {0} loaded".format(split_sig[5]))
+                        con.commit()
                     except sqlite3.IntegrityError as e:
-                        pass
+                        cprint("{}\nOffending Hash ->{}\n".format(e, split_sig[5]), "red", attrs=["dark"])
         else:
             cprint("[ ++ ] Appears as though a zip file or directory made its way into here... losin my noodle... [ ++ ]",
                    "red", attrs=['dark'])
-    con.commit()
-    return {
-        "Success": True,
-        "DoClean": processed
-    }
 
 
 def penne_integ(hash, expected_hash, do_they_match):
     error = False
+    success = True
     if hash is not None and expected_hash is not None and do_they_match is not None:
         if do_they_match is False:
             error = True
+            success = False
             cprint("[ !! ] Please verify the signatures manually, as they did not match. This could be any number of"
                    " things, but it could also mean someone is doing something nasty.", "red", attrs=['dark'])
-        cursed.execute('''INSERT INTO penne_integ(expected_hash, pulled_hash, do_they_match) VALUES (?,?,?)''',
-                       (hash, expected_hash, do_they_match))
+        cursed.execute('''INSERT INTO penne_integ(expected_hash, pulled_hash, do_they_match) VALUES (?,?,?)''', (hash, expected_hash, do_they_match))
         con.commit()
     return {
-        "Matched": f"{do_they_match}",
-        "Expected Hash": f"{expected_hash}",
-        "Actual Hash": f"{hash}",
-        "Error": f"{error}"
+        "Error": error,
+        "Success": success
     }
 
 
