@@ -137,15 +137,21 @@ def init():
 
     if not os.path.exists(HOME):
         config = download_default_config()
-        os.makedirs(HOME)
+        try:
+            os.makedirs(HOME)
+        except FileExistsError:
+            log.warning("Appears as though the files already exist.")
         config_file_path = config['config']['penne_files']['config_file']
         folders = config['config']["penne_folders"]
         for key in folders.keys():
             log.debug("creating folder for: {}".format(key))
-            if not os.path.exists(folders[key]):
-                os.makedirs(folders[key].format(HOME))
+            try:
+                if not os.path.exists(folders[key]):
+                    os.makedirs(folders[key].format(HOME))
+            except FileExistsError as e:
+                log.warning("Appears as though a file was already created/exists: {}".format(e))
+                continue
         log.info("copying default config file to {}".format(config_file_path.format(HOME)))
-
         with open(CONFIG_FILE_PATH, "a+") as conf:
             json.dump(config, conf)
         download_hashsums()
@@ -276,7 +282,7 @@ def beep():
     """
     sys.stdout.write("\a")
     sys.stdout.flush()
-    
+
 
 def unzip_signatures(path):
     """

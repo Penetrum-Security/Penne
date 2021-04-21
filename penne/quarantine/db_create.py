@@ -6,7 +6,7 @@ from json import load
 
 from termcolor import cprint
 
-from penne.lib.settings import HOME,log
+from penne.lib.settings import HOME
 
 
 penne_json = load(open("{}/penne.json".format(HOME), "r"))
@@ -124,7 +124,6 @@ def create_sig_table(path):
     for files in os.listdir(path):
         if files.endswith('pasta'):
             full_path = "{0}/{1}".format(path, files)
-            log.info("Found Signature file: {}".format(full_path))
             with open(full_path) as in_sig:
                 for lines in in_sig.readlines():
                     split_sig = lines.split(':')
@@ -137,7 +136,6 @@ def create_sig_table(path):
                                            split_sig[4],
                                            split_sig[5],
                                        ))
-                        log.info("Signature: {0} loaded".format(split_sig[5]))
                         con.commit()
                     except sqlite3.IntegrityError as e:
                         cprint("{}\nOffending Hash ->{}\n".format(e, split_sig[5]), "red", attrs=["dark"])
