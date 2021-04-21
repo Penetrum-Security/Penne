@@ -129,7 +129,7 @@ def move_detected_file(source):
     return file_dest_path
 
 
-def scan(start_dir, signatures, **kwargs):
+def scan(start_dir, **kwargs):
     do_beep = kwargs.get("do_beep", True)
     display_only_infected = kwargs.get("display_only_infected", False)
     threads = kwargs.get("threads", 12)
