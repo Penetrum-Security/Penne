@@ -162,3 +162,29 @@ def penne_integ(hash, expected_hash, do_they_match):
         "Actual Hash": f"{hash}",
         "Error": f"{error}"
     }
+
+
+def pull_sig(sample_sig, size):
+    if sample_sig is not None and size is not None:
+        cursed.execute('''SELECT * from penne_sigs WHERE bytes_read = (?) and sig = (?)''', (size, sample_sig,))
+        rows = cursed.fetchall()
+        if rows[5] is not None:
+            return {
+                "Success": True,
+                "Identified": True,
+                "Signature": rows[5],
+                "Hash": rows[6],
+                "Detection Type": rows[7],
+                "Bytes To Read": rows[3],
+                "Warning Type": rows[4]
+            }
+        else:
+            return{
+                "Success": True,
+                "Identified": True,
+                "Signature": None,
+                "Hash": None,
+                "Detection Type": None,
+                "Bytes To Read": None,
+                "Warning Type": None
+            }
