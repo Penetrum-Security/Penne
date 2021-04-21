@@ -43,7 +43,7 @@ def first_run():
                        ''')
         con.execute('''
         CREATE TABLE IF NOT EXISTS penne_stats(
-                        id INTEGER NOT NULL,
+                        id INTEGER NOT NULL DEFAULT 0,
                         datetime DATETIME DEFAULT CURRENT_TIMESTAMP,
                         execution_time TEXT NOT NULL DEFAULT '-',
                         failure BOOLEAN NOT NULL DEFAULT 'false',
@@ -132,12 +132,27 @@ def insert_blob(blob_data, blob_name, where_found, original_name, encrypted, nee
                 }
             }
         elif need_to_upload["Upload"] is True:
-            cprint("[ !! ] UNKNOWN SAMPLE IS BEING UPLOADED, PLEASE WAIT. [ !! ]", "red", "on_white",
-                   attrs=[ 'dark', 'bold' ])
-            return {
-                "Success": True,
-                "UploadDest": '{}'.format(need_to_upload['Upload_Where'])
-            }
+            if need_to_upload['API_KEY'] is not None:
+                cprint("[ !! ] UNKNOWN SAMPLE IS BEING UPLOADED, PLEASE WAIT. [ !! ]", "red", "on_white",
+                       attrs=[ 'dark', 'bold' ])
+                return {
+                    "Success": True,
+                    "UploadDest": '{}'.format(need_to_upload['Upload_Where']),
+                    "HTTP_Response": "",
+                    "Premium": True
+                }
+            else:
+                cprint("[ !! ] You need an API key for that my friend. Please visit penetrum.com to attain one. [ !! ]", "red", "on_white",
+                       attrs=[ 'dark' ])
+                cursed.execute('''INSERT INTO penne_stats(id, execution_time, failure, preimum) VALUES(?, ?, ?, ?)''',
+                               (0, '', True, False,))
+                con.commit()
+                return {
+                    "Success": False,
+                    "UploadDest": '{}'.format(need_to_upload['Upload_Where']),
+                    "HTTP_Response": "",
+                    "Premium": False
+                }
     else:
         return {
             "Success": False,
@@ -237,4 +252,5 @@ def pull_sig(sample_sig, size):
                     'Warning': None,
                     'Hash': None
                 }
+
 
