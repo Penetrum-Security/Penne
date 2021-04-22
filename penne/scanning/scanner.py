@@ -107,8 +107,7 @@ def check_signature(filename, do_beep=True):
     byte_sizes = (1024, 2048, 4096)
     with open(filename, "rb") as f:
         for b in byte_sizes:
-            data = binascii.hexlify(f.read(b)).decode()
-            print(data), print(type(data));exit(1)
+            data = binascii.hexlify(f.read(b))
             matches = pull_sig(data, b)
             if matches['Success']:
                 if do_beep:
