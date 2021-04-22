@@ -7,9 +7,13 @@ from termcolor import cprint
 
 from penne.lib.settings import HOME
 
-penne_json = load(open("{}/penne.json".format(HOME), "r"))
-penne_db = "{}/{}".format(penne_json[ 'config' ][ 'penne_folders' ][ 'database_folder' ].format(HOME),
+try:
+    penne_json = load(open("{}/penne.json".format(HOME), "r"))
+    penne_db = "{}/{}".format(penne_json[ 'config' ][ 'penne_folders' ][ 'database_folder' ].format(HOME),
                           "strainer.sqlite")
+except:
+    penne_json = None
+    penne_db = None
 con = sqlite3.connect(penne_db)
 cursed = con.cursor()
 
