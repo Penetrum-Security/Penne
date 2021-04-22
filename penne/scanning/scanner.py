@@ -28,6 +28,7 @@ from penne.lib.settings import (
 )
 from penne.quarantine.noodler import spicy_file
 from penne.quarantine.db_create import pull_sig
+from penne.lib.spinner import Spinner
 
 
 def walk(top, threads=12):
@@ -139,14 +140,15 @@ def scan(start_dir, **kwargs):
 
     walked_paths = walk(start_dir, threads=threads)
 
-    for data in walked_paths:
-        root, subs, files = data[0], data[1], data[-1]
-        paths = [os.path.join(root, f) for f in files]
-        for path in paths:
-            if not display_only_infected:
-                log.debug("scanning file: {}".format(path))
-            results = check_signature(path, do_beep=do_beep)
-            if results:
-                if move_detected:
-                    moved_to = move_detected_file(path)
-                    log.info("file marked to be moved and moved to: {}".format(moved_to))
+    with Spinner():
+        for data in walked_paths:
+            root, subs, files = data[0], data[1], data[-1]
+            paths = [os.path.join(root, f) for f in files]
+            for path in paths:
+                if not display_only_infected:
+                    log.debug("scanning file: {}".format(path))
+                results = check_signature(path, do_beep=do_beep)
+                if results:
+                    if move_detected:
+                        moved_to = move_detected_file(path)
+                        log.info("file marked to be moved and moved to: {}".format(moved_to))

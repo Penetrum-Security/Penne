@@ -28,6 +28,10 @@ def main():
         log.info("done, rerun Penne")
         sys.exit(1)
     if opts.scanner:
+        # because we're extremely smart, we try to load the file before it exists
+        # we spent about an hour on stream trying to figure out why we're so smart
+        # until we realized that we tried to import something without the file
+        # GENIUS
         from penne.scanning.scanner import scan
         log.info("starting scan on directory: {}".format(
             opts.startDir if opts.startDir != "." else "current directory"
@@ -54,8 +58,4 @@ def main():
 
 
 if __name__ == "__main__":
-    try:
-        main()
-    except:
-        log.warning("program is not intialized, starting initialization")
-        init()
+    main()

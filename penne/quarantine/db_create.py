@@ -5,13 +5,14 @@ from json import load
 
 from termcolor import cprint
 
-from penne.lib.settings import HOME
+from penne.lib.settings import HOME, init
 
 penne_json = load(open("{}/penne.json".format(HOME), "r"))
 penne_db = "{}/{}".format(penne_json['config']['penne_folders']['database_folder'].format(HOME),
                           "strainer.sqlite")
 con = sqlite3.connect(penne_db)
 cursed = con.cursor()
+
 
 def first_run():
     try:
