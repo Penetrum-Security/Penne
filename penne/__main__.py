@@ -54,8 +54,4 @@ def main():
 
 
 if __name__ == "__main__":
-    try:
-        main()
-    except:
-        log.warning("program is not intialized, starting initialization")
-        init()
+    main()
