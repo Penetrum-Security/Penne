@@ -13,7 +13,6 @@ penne_db = "{}/{}".format(penne_json[ 'config' ][ 'penne_folders' ][ 'database_f
 con = sqlite3.connect(penne_db)
 cursed = con.cursor()
 
-
 def first_run():
     try:
         con.execute('''
@@ -116,6 +115,10 @@ def insert_blob(blob_data, blob_name, where_found, original_name, encrypted, nee
                 '''INSERT INTO penne_pasta(detected_as, original_name, sample_name, sample_origin, sample_blob, 
                 encrypted, stored_key, stored_nonce) VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
                 (detected_as, original_name, blob_name, where_found, blob_data, encrypted, key, nonce,))
+            cursed.execute('''SELECT id FROM penne_pasta WHERE original_name = ?''', (original_name,))
+            fid = cursed.fetchone()
+            cursed.execute('''INSERT INTO penne_stats(id, execution_time, failure, preimum) VALUES(?, ?, ?, ?)''',
+                           (fid[0], '', False, False,))
             con.commit()
             return {
                 "Success": True,
@@ -142,8 +145,8 @@ def insert_blob(blob_data, blob_name, where_found, original_name, encrypted, nee
                     "Premium": True
                 }
             else:
-                cprint("[ !! ] You need an API key for that my friend. Please visit penetrum.com to attain one. [ !! ]", "red", "on_white",
-                       attrs=[ 'dark' ])
+                cprint("[ !! ] You need an API key for that my friend. Please visit penetrum.com to attain one. [ !! ]",
+                       "red", "on_white", attrs=[ 'dark' ])
                 cursed.execute('''INSERT INTO penne_stats(id, execution_time, failure, preimum) VALUES(?, ?, ?, ?)''',
                                (0, '', True, False,))
                 con.commit()
@@ -224,7 +227,8 @@ def penne_integ(hash_of, expected_hash, do_they_match):
             cprint("[ !! ] Please verify the signatures manually, as they did not match. This could be any number of"
                    " things, but it could also mean someone is doing something nasty.", "red", attrs=[ 'dark' ])
         cursed.execute('''INSERT INTO penne_integ(expected_hash, pulled_hash, do_they_match) VALUES (?,?,?)''',
-                       (hash_of, expected_hash, do_they_match))
+                       (hash_of, expected_hash, do_they_match)
+                       )
         con.commit()
     return {
         "Error": error,
@@ -234,23 +238,22 @@ def penne_integ(hash_of, expected_hash, do_they_match):
 
 def pull_sig(sample_sig, size):
     if sample_sig is not None and size is not None:
-            cursed.execute('''SELECT * from penne_sigs WHERE bytes_read = (?) and sig = (?)''', (size, sample_sig,))
-            rows = cursed.fetchone()
-            if len(rows) != 0 and rows[ 5 ] is not None:
-                return {
-                    "Success": True,
-                    "Identified": True,
-                    'OS': rows[ 2 ],
-                    'Warning': rows[ 4 ],
-                    'Hash': rows[ 6 ]
-                }
-            else:
-                return {
-                    "Success": False,
-                    "Identified": False,
-                    'OS': None,
-                    'Warning': None,
-                    'Hash': None
-                }
-
+        cursed.execute('''SELECT * from penne_sigs WHERE bytes_read = (?) and sig = (?)''', (size, sample_sig,))
+        rows = cursed.fetchone()
+        if len(rows) != 0 and rows[ 5 ] is not None:
+            return {
+                "Success": True,
+                "Identified": True,
+                'OS': rows[ 2 ],
+                'Warning': rows[ 4 ],
+                'Hash': rows[ 6 ]
+            }
+        else:
+            return {
+                "Success": False,
+                "Identified": False,
+                'OS': None,
+                'Warning': None,
+                'Hash': None
+            }
 
