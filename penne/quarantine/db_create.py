@@ -240,7 +240,7 @@ def penne_integ(hash_of, expected_hash, do_they_match):
 def pull_sig(sample_sig, size):
     if sample_sig is not None and size is not None:
         cursed.execute('''SELECT * from penne_sigs WHERE bytes_read = (?) and sig = (?)''', (size, sample_sig,))
-        rows = cursed.fetchall()
+        rows = cursed.fetchone()
         print(rows);exit(1)
         if len(rows) != 0 and rows[ 5 ] is not None:
             return {
