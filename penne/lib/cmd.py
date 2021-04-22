@@ -39,6 +39,22 @@ class Parser(argparse.ArgumentParser):
             "-M", "--move", action="store_true", default=False, dest="moveFiles",
             help="Move files as they're detected (BE CAREFUL WITH THIS)"
         )
+        scanning.add_argument(
+            "--no-beep", action="store_true", default=False, dest="turnBeepOff",
+            help="Pass to disable the beep upon discovering an infected file"
+        )
+        scanning.add_argument(
+            "-I", "--only-infected", action="store_true", default=False, dest="displayOnlyInfected",
+            help="Pass to display only infected files that are discovered (disable verbosity)"
+        )
+        scanning.add_argument(
+            "-t", "--threads", type=int, dest="threadNum", default=12,
+            help="Pass an amount of threads to run the scanner with (*MAX=30)"
+        )
+        scanning.add_argument(
+            "-d", "--dir", dest="startDir", default=".",
+            help="Pass to start scanning on this directory (default is your current directory)"
+        )
         sigtool = parser.add_argument_group("Sigtool Arguments")
         sigtool.add_argument(
             "-w", "--warning", dest="warnType", default="DETECT",
@@ -92,4 +108,7 @@ def verify_args(opts):
     if opts.sigtool and opts.filename is None:
         log.error("must supply a filename with sigtool to generate the signature")
         sys.exit(1)
+    if opts.threadNum > 30:
+        log.warning("max amount of threads is 30, defaulting down to 30 threads")
+        opts.threadNum = 30
     print(WELCOME_BANNER)

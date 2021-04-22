@@ -109,6 +109,8 @@ def check_signature(filename, do_beep=True):
             data = binascii.hexlify(f.read(b))
             matches = pull_sig(data, b)
             if matches['Success']:
+                if do_beep:
+                    beep()
                 termcolor.cprint(
                     "Match found:\nPath: {}\nOS Type: {}\nSHA-256: {}\nWarning Type: {}".format(
                         filename, matches['OS'], matches['Hash'], matches['Warning']

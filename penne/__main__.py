@@ -4,6 +4,7 @@ import os
 import sys
 
 from penne.sigtools.sauce import make_signature
+from penne.scanning.scanner import scan
 from penne.lib.cmd import (
     Parser,
     verify_args
@@ -28,7 +29,15 @@ def main():
         log.info("done, rerun Penne")
         sys.exit(1)
     if opts.scanner:
-        print("scanning")
+        log.info("starting scan on directory: {}".format(
+            opts.startDir if opts.startDir != "." else "current directory"
+        ))
+        scan(
+            opts.startDir,
+            display_only_infected=opts.displayOnlyInfected,
+            threads=opts.threadNum,
+            move_detected=opts.moveFiles
+        )
     if opts.sigtool:
         if os.path.isdir(opts.filename):
             files = ["{}/{}".format(opts.filename, f) for f in os.listdir(opts.filename)]
