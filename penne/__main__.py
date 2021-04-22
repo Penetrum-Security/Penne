@@ -4,7 +4,6 @@ import os
 import sys
 
 from penne.sigtools.sauce import make_signature
-from penne.scanning.scanner import scan
 from penne.lib.cmd import (
     Parser,
     verify_args
@@ -29,6 +28,7 @@ def main():
         log.info("done, rerun Penne")
         sys.exit(1)
     if opts.scanner:
+        from penne.scanning.scanner import scan
         log.info("starting scan on directory: {}".format(
             opts.startDir if opts.startDir != "." else "current directory"
         ))
