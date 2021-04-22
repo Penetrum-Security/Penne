@@ -242,16 +242,14 @@ def pull_sig(sample_sig, size):
         cursed.execute('''SELECT * from penne_sigs WHERE bytes_read = (?) and sig = (?)''', (size, sample_sig,))
         rows = cursed.fetchone()
         if rows is not None:
-            print(rows)
-            exit(1)
-        if rows is not None and rows[ 5 ] is not None:
-            return {
-                "Success": True,
-                "Identified": True,
-                'OS': rows[ 2 ],
-                'Warning': rows[ 4 ],
-                'Hash': rows[ 6 ]
-            }
+            if rows[5] is not None:
+                return {
+                    "Success": True,
+                    "Identified": True,
+                    'OS': rows[2],
+                    'Warning': rows[4],
+                    'Hash': rows[6]
+                }
         else:
             return {
                 "Success": False,

@@ -33,7 +33,6 @@ def main():
         # until we realized that we tried to import something without the file
         # GENIUS
         from penne.scanning.scanner import scan
-
         log.info("starting scan on directory: {}".format(
             opts.startDir if opts.startDir != "." else "current directory"
         ))
