@@ -5,6 +5,7 @@
 [![Downloads](https://img.shields.io/github/downloads/penetrum-security/penne/total?style=plastic)](https://github.com/penetrum-security/penne)
 [![Size](https://img.shields.io/github/languages/code-size/penetrum-security/penne?style=plastic)](https://github.com/penetrum-security)
 [![Release](https://img.shields.io/github/v/tag/penetrum-security/penne?style=plastic)](https://github.com/penetrum-security)
+[![Signatures](https://img.shields.io/website?down_color=red&down_message=NOT%20READY&label=Signature%20Database&style=plastic&up_color=lightgreen&up_message=READY&url=https%3A%2F%2Fpenetrum.com%2Fpenne%2Fhashsums.txt)](https://penentrum.com/penne/hashsums.txt)
 
 Penne AV is a cross platform Antivirus solution written in python for portability and ease. 
 
