@@ -40,6 +40,7 @@ WHITELISTED_HASHES = (
     "e15c5b469ea3e0a695bea6f2c82bcf8e62821074939ddd85b77e0007ff165475",
     "f445f03f6621591dacda807ec0deb292ca40d8bb9905f09e3317b5d5775fe959",
     "f6f2b945f6c411b02ba3da9c7ace88dcf71b6af65ba2e0d89aa82900042b5a10",
+    "164c5fa8067facf1a43f09ce3d0e35ebf53a7f5723ecbf15a8667cfc53c26f6c",
     # cargo "ok" file (rust file that just says "ok" in a binary format)
     "2689367b205c16ce32ed4200942b8b8b1e262dfc70d9bc9fbc77c49699a4f1df"
 )
@@ -138,11 +139,12 @@ def verify_files(filepaths, hashsum_path):
 
 
 def rinse_pasta(folder_path):
-    for item in os.listdir(folder_path):
-        try:
-            os.remove("{}/{}".format(folder_path, item))
-        except:
-            pass
+    with Spinner():
+        for item in os.listdir(folder_path):
+            try:
+                os.remove("{}/{}".format(folder_path, item))
+            except:
+                pass
 
 
 def initialize_database(config):

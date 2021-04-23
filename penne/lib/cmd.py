@@ -109,6 +109,6 @@ def verify_args(opts):
         log.error("must supply a filename with sigtool to generate the signature")
         sys.exit(1)
     if opts.threadNum > 30:
-        log.warning("max amount of threads is 30, defaulting down to 30 threads")
+        log.warning("max amount of threads is 30 (you passed {}), defaulting down to 30 threads".format(opts.threadNum))
         opts.threadNum = 30
     print(WELCOME_BANNER)
