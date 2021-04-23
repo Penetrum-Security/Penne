@@ -1,10 +1,8 @@
 # Penne AV
 
-<center>
 [![Issues](https://img.shields.io/github/issues/penetrum-security/penne?style=for-the-badge)](https://github.com/penetrum-security/Penne/issues)
 [![License](https://img.shields.io/github/license/penetrum-security/penne?style=for-the-badge)](https://github.com/penetrum-security/penne)
 [![Downloads](https://img.shields.io/github/downloads/penetrum-security/penne/total?style=for-the-badge)](https://github.com/penetrum-security/penne)
-</center>
 
 Penne AV is a cross platform Antivirus solution written in python for portability and ease.
 
