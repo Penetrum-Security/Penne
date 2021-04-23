@@ -5,7 +5,7 @@ from json import load
 
 from termcolor import cprint
 
-from penne.lib.settings import HOME, init
+from penne.lib.settings import HOME, WHITELISTED_HASHES
 
 penne_json = load(open("{}/penne.json".format(HOME), "r"))
 penne_db = "{}/{}".format(penne_json['config']['penne_folders']['database_folder'].format(HOME),
@@ -192,19 +192,20 @@ def create_sig_table(path):
             with open(full_path) as in_sig:
                 for lines in in_sig.readlines():
                     split_sig = lines.split(':')
-                    try:
-                        cursed.execute(
-                            '''INSERT INTO penne_sigs(os, bytes_read, warning_type, sig, sha_hash) VALUES(?, ?, ?, ?, 
-                            ?)''',
-                            (
-                                split_sig[ 1 ],
-                                split_sig[ 2 ],
-                                split_sig[ 3 ],
-                                split_sig[ 4 ],
-                                split_sig[ 5 ],
-                            ))
-                    except sqlite3.IntegrityError:
-                        continue
+                    if split_sig[-1] not in WHITELISTED_HASHES:
+                        try:
+                            cursed.execute(
+                                '''INSERT INTO penne_sigs(os, bytes_read, warning_type, sig, sha_hash) VALUES(?, ?, ?, ?, 
+                                ?)''',
+                                (
+                                    split_sig[ 1 ],
+                                    split_sig[ 2 ],
+                                    split_sig[ 3 ],
+                                    split_sig[ 4 ],
+                                    split_sig[ 5 ],
+                                ))
+                        except sqlite3.IntegrityError:
+                            continue
         else:
             cprint(
                 "[ ++ ] Appears as though a zip file or directory made its way into here... losin my noodle... [ ++ ]",

@@ -22,6 +22,27 @@ HOME = os.getenv("PENNE_HOME", "{}/.penne".format(os.path.expanduser('~')))
 CONFIG_FILE_PATH = "{}/penne.json".format(HOME)
 DEFAULT_MOVE_DIRECTORY = "{}/backups".format(HOME)
 HASHSUM_FILE = "{}/hashsums.txt".format(HOME)
+WHITELISTED_HASHES = (
+    # empty files
+    "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    # .git files
+    "0223497a0b8b033aa58a3a521b8629869386cf7ab0e2f101963d328aa62193f7",
+    "1f74d5e9292979b573ebd59741d46cb93ff391acdd083d340b94370753d92437",
+    "3ee1726fce7169faf7b5f1c0ff6dc229deab5a2642b005ce8e603c3f4e05e162",
+    "522eb45b6bb3dfb00c53baf876c3d5d6e8e6c3a70a5cbd491f990c450bef6624",
+    "6671fe83b7a07c8932ee89164d1f2793b2318058eb8b98dc5c06ee0a5a3b0ec1",
+    "73480ff46d8753638f8475a2fdddf9399a26ef7f0be5eb6292cd20aa765ea043",
+    "81765af2daef323061dcbc5e61fc16481cb74b3bac9ad8a174b186523586f6c5",
+    "85ab6c163d43a17ea9cf7788308bca1466f1b0a8d1cc92e26e9bf63da4062aee",
+    "85c88a914219203c1a21ff96f0f7fb02871c474f05c0f01f648c6aa5f9732c47",
+    "9154a73a556e2d16655f4d635191e9c0581a34e4dee973b6107be9f5db987bc6",
+    "a4c3d2b9c7bb3fd8d1441c31bd4ee71a595d66b44fcf49ddb310252320169989",
+    "e15c5b469ea3e0a695bea6f2c82bcf8e62821074939ddd85b77e0007ff165475",
+    "f445f03f6621591dacda807ec0deb292ca40d8bb9905f09e3317b5d5775fe959",
+    "f6f2b945f6c411b02ba3da9c7ace88dcf71b6af65ba2e0d89aa82900042b5a10",
+    # cargo "ok" file (rust file that just says "ok" in a binary format)
+    "2689367b205c16ce32ed4200942b8b8b1e262dfc70d9bc9fbc77c49699a4f1df"
+)
 VERSION_NUMBERS = "0.1"
 VERSION_STRING = "dev" if VERSION_NUMBERS.count(".") > 2 else "stable"
 SAYING = (
@@ -116,6 +137,14 @@ def verify_files(filepaths, hashsum_path):
     return list(good), list(bad)
 
 
+def rinse_pasta(folder_path):
+    for item in os.listdir(folder_path):
+        try:
+            os.remove("{}/{}".format(folder_path, item))
+        except:
+            pass
+
+
 def initialize_database(config):
     from penne.quarantine.db_create import first_run, create_sig_table
 
@@ -177,6 +206,8 @@ def init():
                 unzip_signatures(item)
         with Spinner():
             initialize_database(config)
+        log.info("cleaning up pasta files")
+        rinse_pasta(config["config"]["penne_folders"]["database_folder"].format(HOME) + "/unzipped")
         return config
     else:
         with open(CONFIG_FILE_PATH) as data:
