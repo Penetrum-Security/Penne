@@ -22,6 +22,13 @@ HOME = os.getenv("PENNE_HOME", "{}/.penne".format(os.path.expanduser('~')))
 CONFIG_FILE_PATH = "{}/penne.json".format(HOME)
 DEFAULT_MOVE_DIRECTORY = "{}/backups".format(HOME)
 HASHSUM_FILE = "{}/hashsums.txt".format(HOME)
+FINISHED_FILES_JSON_LIST = "{}/finished.json".format(HOME)
+COMPLETED_RESULTS = {
+    "unable_to_scan": [],
+    "moved_files": [],
+    "total_scanned": 0,
+    "infected_files": []
+}
 WHITELISTED_HASHES = (
     # empty files
     "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
@@ -349,3 +356,45 @@ def get_hash(filename, hash_type="sha256"):
     with open(filename, "rb") as f:
         h.update(f.read())
     return h.hexdigest()
+
+
+def list_files(**kwargs):
+    list_moved = kwargs.get("list_moved", False)
+    list_infected = kwargs.get("list_infected", False)
+    list_unable = kwargs.get("list_unable", False)
+
+    s_found = "list of {} during last scan:"
+    s_not_found = "no files {} during last scan"
+    do_exit = False
+
+    if os.path.exists(FINISHED_FILES_JSON_LIST):
+        with open(FINISHED_FILES_JSON_LIST, "r") as f:
+            data = json.load(f)
+            if list_moved:
+                do_exit = True
+                log.info(s_found.format("files moved"))
+                if len(data["moved"]) != 0:
+                    for item in data["moved"]:
+                        print(item)
+                else:
+                    log.info(s_not_found.format("moved"))
+            if list_infected:
+                do_exit = True
+                log.info(s_found.format("infected files found"))
+                if len(data["infected"]) != 0:
+                    for item in data["infected"]:
+                        print(item)
+                else:
+                    log.info(s_not_found.format("found to be infected"))
+            if list_unable:
+                do_exit = True
+                log.info(s_found.format("files unable to be processed"))
+                if len(data["unable"]) != 0:
+                    for item in data["unable"]:
+                        print(item)
+                else:
+                    log.info(s_not_found.format("were unable to scanned"))
+    if do_exit:
+        exit(1)
+    else:
+        pass

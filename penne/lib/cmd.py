@@ -81,6 +81,9 @@ class Parser(argparse.ArgumentParser):
         )
         misc = parser.add_argument_group("Misc Arguments")
         misc.add_argument("-f", "--filename", dest="filename", help="Pass a filename or directory to use", default=None)
+        misc.add_argument("--unable", dest="listUnable", action="store_true", default=False, help=argparse.SUPPRESS)
+        misc.add_argument("--moved", dest="listMoved", action="store_true", default=False, help=argparse.SUPPRESS)
+        misc.add_argument("--infected", dest="listInfected", default=False, action="store_true", help=argparse.SUPPRESS)
         return parser.parse_args()
 
 
@@ -89,6 +92,9 @@ def verify_args(opts):
     verify that the arguments are acceptable to be run together
     """
     special_opts = (opts.initialize, opts.sigtool, opts.scanner)
+    list_opts = (opts.listUnable, opts.listMoved, opts.listInfected)
+    if any(list_opts):
+        return
     special_opts_flags = ["-g/--sigtool", "-i/--initialize", "-s/--scan"]
     total = 0
     for opt in special_opts:

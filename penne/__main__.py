@@ -12,13 +12,20 @@ from penne.lib.cmd import (
 from penne.lib.settings import (
     init,
     log,
-    HOME
+    HOME,
+    list_files
 )
 
 
 def main():
     opts = Parser().optparse()
     verify_args(opts)
+
+    list_files(
+        list_moved=opts.listMoved,
+        list_infected=opts.listInfected,
+        list_unable=opts.listUnable
+    )
 
     print("\nstarting PenneAV at: {}\n".format(datetime.datetime.now().strftime("%m/%d/%Y %H:%M:%S")))
 
@@ -35,7 +42,7 @@ def main():
         # we spent about an hour on stream trying to figure out why we're so smart
         # until we realized that we tried to import something without the file
         # GENIUS
-        from penne.scanning.scanner import scan
+        from penne.scanning.scanner import scan, finish_scan
         log.info("starting scan on directory: {}".format(
             opts.startDir if opts.startDir != "." else "current directory"
         ))
@@ -45,6 +52,7 @@ def main():
             threads=opts.threadNum,
             move_detected=opts.moveFiles
         )
+        finish_scan()
     if opts.sigtool:
         if os.path.isdir(opts.filename):
             files = ["{}/{}".format(opts.filename, f) for f in os.listdir(opts.filename)]
