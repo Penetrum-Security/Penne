@@ -92,7 +92,8 @@ def check_updates(updated_url, pull_from_git, is_premium, last_version, last_upd
                 cursed.execute(
                     '''INSERT INTO penne_pulls(last_pull_url, updated_from_github, last_updated_verion, 
                     last_check_version, premium) VALUES (?, ?, ?, ?, ?)''',
-                    (updated_url, pull_from_git, last_updated_version, last_version, is_premium,))
+                    (updated_url, pull_from_git, last_updated_version, last_version, is_premium,)
+                )
                 con.commit()
             except sqlite3.OperationalError as e:
                 cprint("[ !! ] THERE WAS AN ERROR CONENCTING TO THE DATABASE, BUILDING AND/OR REBUILDING. [ !! ]",
@@ -101,7 +102,8 @@ def check_updates(updated_url, pull_from_git, is_premium, last_version, last_upd
                 cursed.execute(
                     '''INSERT INTO penne_pulls(last_pull_url, updated_from_github, last_updated_verion, 
                     last_check_version, premium) VALUES (?, ?, ?, ?, ?)''',
-                    (updated_url, pull_from_git, last_updated_version, last_version, is_premium,))
+                    (updated_url, pull_from_git, last_updated_version, last_version, is_premium,)
+                )
                 con.commit()
     else:
         cprint("[ !! ] COULD NOT CHECK FOR UPDATES [ !! ]", "red", attrs=[ 'dark', 'bold' ])
@@ -115,7 +117,8 @@ def insert_blob(blob_data, blob_name, where_found, original_name, encrypted, nee
             cursed.execute(
                 '''INSERT INTO penne_pasta(detected_as, original_name, sample_name, sample_origin, sample_blob, 
                 encrypted, stored_key, stored_nonce) VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
-                (detected_as, original_name, blob_name, where_found, blob_data, encrypted, key, nonce,))
+                (detected_as, original_name, blob_name, where_found, blob_data, encrypted, key, nonce,)
+            )
             cursed.execute('''SELECT id FROM penne_pasta WHERE original_name = ?''', (original_name,))
             fid = cursed.fetchone()
             cursed.execute('''INSERT INTO penne_stats(id, execution_time, failure, preimum) VALUES(?, ?, ?, ?)''',
