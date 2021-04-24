@@ -38,7 +38,8 @@ def first_run():
                        sample_blob BLOB NOT NULL,
                        encrypted BOOLEAN NOT NULL DEFAULT 'true',
                        stored_key TEXT NOT NULL DEFAULT '-',
-                       stored_nonce TEXT NOT NULL DEFAULT '-'
+                       stored_nonce TEXT NOT NULL DEFAULT '-',
+                       stored_tag TEXT NOT NULL DEFAULT '-'
         )
                        ''')
         con.execute('''
@@ -109,15 +110,15 @@ def check_updates(updated_url, pull_from_git, is_premium, last_version, last_upd
         cprint("[ !! ] COULD NOT CHECK FOR UPDATES [ !! ]", "red", attrs=[ 'dark', 'bold' ])
 
 
-def insert_blob(blob_data, blob_name, where_found, original_name, encrypted, need_to_upload, nonce, key, detected_as):
+def insert_blob(blob_data, blob_name, where_found, original_name, encrypted, need_to_upload, nonce, key, tag, detected_as):
     if isinstance(blob_data, str) and isinstance(blob_name, str) and isinstance(where_found, str) and isinstance(
             original_name, str) and isinstance(encrypted, bool) and isinstance(detected_as, str) \
-            and isinstance(need_to_upload, dict):
+            and isinstance(need_to_upload, dict) and isinstance(tag, str):
         if need_to_upload['Upload'] is False:
             cursed.execute(
                 '''INSERT INTO penne_pasta(detected_as, original_name, sample_name, sample_origin, sample_blob, 
-                encrypted, stored_key, stored_nonce) VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
-                (detected_as, original_name, blob_name, where_found, blob_data, encrypted, key, nonce,)
+                encrypted, stored_key, stored_nonce, stored_tag) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+                (detected_as, original_name, blob_name, where_found, blob_data, encrypted, key, nonce, tag,)
             )
             cursed.execute('''SELECT id FROM penne_pasta WHERE original_name = ?''', (original_name,))
             fid = cursed.fetchone()
@@ -135,6 +136,7 @@ def insert_blob(blob_data, blob_name, where_found, original_name, encrypted, nee
                     "need_to_upload": "{}".format(detected_as),
                     "nonce": "{}".format(nonce),
                     "key": "{}".format(key),
+                    "tag": "{}".format(tag),
                     "detected_as": "{}".format(detected_as),
                 }
             }
@@ -172,9 +174,10 @@ def insert_blob(blob_data, blob_name, where_found, original_name, encrypted, nee
                 "need_to_upload": type(dict(detected_as)),
                 "nonce": type(str(nonce)),
                 "key": type(str(key)),
+                "tag": type(str(tag)),
                 "detected_as": type(str(detected_as)),
             },
-            "Recieved": {
+            "Received": {
                 "Blob_Data": type(blob_data),
                 "blob_name": type(blob_name),
                 "where_found": type(where_found),
@@ -183,6 +186,7 @@ def insert_blob(blob_data, blob_name, where_found, original_name, encrypted, nee
                 "need_to_upload": type(detected_as),
                 "nonce": type(nonce),
                 "key": type(key),
+                "tag": type(tag),
                 "detected_as": type(detected_as),
             }
         }
