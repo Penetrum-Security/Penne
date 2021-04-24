@@ -136,6 +136,7 @@ def insert_blob(blob_data, blob_name, where_found, original_name, encrypted, nee
                     "need_to_upload": "{}".format(detected_as),
                     "nonce": "{}".format(nonce),
                     "key": "{}".format(key),
+                    "tag": "{}".format(tag),
                     "detected_as": "{}".format(detected_as),
                 }
             }
@@ -173,9 +174,10 @@ def insert_blob(blob_data, blob_name, where_found, original_name, encrypted, nee
                 "need_to_upload": type(dict(detected_as)),
                 "nonce": type(str(nonce)),
                 "key": type(str(key)),
+                "tag": type(str(tag)),
                 "detected_as": type(str(detected_as)),
             },
-            "Recieved": {
+            "Received": {
                 "Blob_Data": type(blob_data),
                 "blob_name": type(blob_name),
                 "where_found": type(where_found),
@@ -184,6 +186,7 @@ def insert_blob(blob_data, blob_name, where_found, original_name, encrypted, nee
                 "need_to_upload": type(detected_as),
                 "nonce": type(nonce),
                 "key": type(key),
+                "tag": type(tag),
                 "detected_as": type(detected_as),
             }
         }
