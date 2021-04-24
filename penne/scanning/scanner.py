@@ -6,6 +6,7 @@ from __future__ import print_function
 
 import os
 import sys
+import json
 import shutil
 import pathlib
 import binascii
@@ -24,7 +25,9 @@ from penne.lib.settings import (
     log,
     beep,
     get_hash,
-    DEFAULT_MOVE_DIRECTORY
+    DEFAULT_MOVE_DIRECTORY,
+    COMPLETED_RESULTS,
+    FINISHED_FILES_JSON_LIST
 )
 from penne.quarantine.noodler import spicy_file
 from penne.quarantine.db_create import pull_sig
@@ -117,19 +120,45 @@ def check_signature(filename, do_beep=True):
                         filename, matches['OS'], matches['Hash'], matches['Warning']
                     )
                 )
-                return True
-    return False
+                return True, matches["Warning"]
+    return False, None
 
 
-def move_detected_file(source):
+def move_detected_file(source, detection, arch, detected_as="EVIL AF"):
     file_dest_hash = get_hash(source)
     file_dest_path = "{}/{}".format(DEFAULT_MOVE_DIRECTORY, file_dest_hash)
-    shutil.move(source, file_dest_path)
+    shutil.copy(source, file_dest_path)
     try:
         os.chmod(file_dest_path, S_IREAD|S_IRGRP|S_IROTH)
     except:
         log.warn("unable to change file attributes to read only")
+    do_quarn(source, detection, arch, detected_as)
     return file_dest_path
+
+
+def finish_scan():
+    if not os.path.exists(FINISHED_FILES_JSON_LIST):
+        attribute = "a+"
+    else:
+        attribute = "w"
+    with open(FINISHED_FILES_JSON_LIST, attribute) as res:
+        data = {
+            "infected": COMPLETED_RESULTS["infected_files"],
+            "unable": COMPLETED_RESULTS["unable_to_scan"],
+            "moved": COMPLETED_RESULTS["moved_files"]
+        }
+        json.dump(data, res)
+    log.info("scanning finished")
+    termcolor.cprint(
+        "\nSCAN RESULTS:\n{}\nTOTAL FILES SCANNED: {}\nTOTAL AMOUNT OF FILES MOVED: {}\n"
+        "TOTAL FILES UNABLE TO BE SCANNED: {}\nTOTAL INFECTED FILES FOUND: {}\n{}\n"
+        "\nto see files that were unable to be scanned run: penneav --unable\n"
+        "to see the files that were moved run: penneav --moved\n"
+        "to see the list of infected files run: penneav --infected".format(
+            "-" * 36, COMPLETED_RESULTS["total_scanned"], len(COMPLETED_RESULTS["moved_files"]),
+            len(COMPLETED_RESULTS["unable_to_scan"]), len(COMPLETED_RESULTS["infected_files"]),
+            "-" * 36
+    ), "green", attrs=["bold"])
 
 
 def scan(start_dir, **kwargs):
@@ -145,10 +174,19 @@ def scan(start_dir, **kwargs):
             root, subs, files = data[0], data[1], data[-1]
             paths = [os.path.join(root, f) for f in files]
             for path in paths:
-                if not display_only_infected:
-                    log.debug("scanning file: {}".format(path))
-                results = check_signature(path, do_beep=do_beep)
-                if results:
-                    if move_detected:
-                        moved_to = move_detected_file(path)
-                        log.info("file marked to be moved and moved to: {}".format(moved_to))
+                try:
+                    if not display_only_infected:
+                        log.debug("scanning file: {}".format(path))
+                    results = check_signature(path, do_beep=do_beep)
+                    if results[0]:
+                        COMPLETED_RESULTS["infected_files"].append(path)
+                        if move_detected:
+                            moved_to = move_detected_file(
+                                path, results[1], platform.platform().architecture
+                            )
+                            log.info("file marked to be moved and moved to: {}".format(moved_to))
+                            COMPLETED_RESULTS["moved_files"].append(path)
+                    COMPLETED_RESULTS["total_scanned"] += 1
+                except Exception:
+                    log.error("unable to finish file scanning on filename: {}".format(path))
+                    COMPLETED_RESULTS["unable_to_scan"].append(path)
