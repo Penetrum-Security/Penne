@@ -50,7 +50,10 @@ def main():
             opts.startDir,
             display_only_infected=opts.displayOnlyInfected,
             threads=opts.threadNum,
-            move_detected=opts.moveFiles
+            move_detected=opts.moveFiles,
+            follow_sym=opts.followSym,
+            ignored_dirs=opts.ignoreDirs,
+            ignored_files=opts.ignoreFiles
         )
         finish_scan()
     if opts.sigtool:

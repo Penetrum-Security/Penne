@@ -55,6 +55,18 @@ class Parser(argparse.ArgumentParser):
             "-d", "--dir", dest="startDir", default=".",
             help="Pass to start scanning on this directory (default is your current directory)"
         )
+        scanning.add_argument(
+            "--follow", dest="followSym", default=False, action="store_true",
+            help="Pass this flag to follow symlinks"
+        )
+        scanning.add_argument(
+            "--ignore-dirs", nargs="+", default=[], dest="ignoreDirs",
+            help="Pass a list of directories you want to ignore, default is None"
+        )
+        scanning.add_argument(
+            "--ignore-files", nargs="+", dest="ignoreFiles", default=[],
+            help="Pass a list of files you want to ignore, default is None"
+        )
         sigtool = parser.add_argument_group("Sigtool Arguments")
         sigtool.add_argument(
             "-w", "--warning", dest="warnType", default="DETECT",

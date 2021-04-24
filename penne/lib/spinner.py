@@ -1,35 +1,50 @@
 import sys
-import time
 import threading
+import itertools
+import time
 
 
 class Spinner:
-    busy = False
-    delay = 0.1
 
-    @staticmethod
-    def spinning_cursor():
-        while 1:
-            for cursor in '|/-\\': yield cursor
+    def __init__(self, delay=0.1):
+        self.spinner = itertools.cycle(['-', '/', '|', '\\'])
+        self.delay = delay
+        self.busy = False
+        self.spinner_visible = False
 
-    def __init__(self, delay=None):
-        self.spinner_generator = self.spinning_cursor()
-        if delay and float(delay): self.delay = delay
+    def write_next(self):
+        with self._screen_lock:
+            if not self.spinner_visible:
+                sys.stdout.write(next(self.spinner))
+                self.spinner_visible = True
+                sys.stdout.flush()
+
+    def remove_spinner(self, cleanup=False):
+        with self._screen_lock:
+            if self.spinner_visible:
+                sys.stdout.write('\b')
+                self.spinner_visible = False
+                if cleanup:
+                    sys.stdout.write(' ')       # overwrite spinner with blank
+                    sys.stdout.write('\r')      # move to next line
+                sys.stdout.flush()
 
     def spinner_task(self):
         while self.busy:
-            sys.stdout.write(next(self.spinner_generator))
-            sys.stdout.flush()
+            self.write_next()
             time.sleep(self.delay)
-            sys.stdout.write('\b')
-            sys.stdout.flush()
+            self.remove_spinner()
 
     def __enter__(self):
-        self.busy = True
-        threading.Thread(target=self.spinner_task).start()
+        if sys.stdout.isatty():
+            self._screen_lock = threading.Lock()
+            self.busy = True
+            self.thread = threading.Thread(target=self.spinner_task)
+            self.thread.start()
 
     def __exit__(self, exception, value, tb):
-        self.busy = False
-        time.sleep(self.delay)
-        if exception is not None:
-            return False
+        if sys.stdout.isatty():
+            self.busy = False
+            self.remove_spinner(cleanup=True)
+        else:
+            sys.stdout.write('\r')

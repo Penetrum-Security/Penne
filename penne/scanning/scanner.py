@@ -137,10 +137,18 @@ def move_detected_file(source, detection, arch, detected_as="EVIL AF"):
 
 
 def finish_scan():
+
+    def percent(part, whole):
+        try:
+            return str(100 * part/whole)[0:5]
+        except:
+            return 100 * part/whole
+
     if not os.path.exists(FINISHED_FILES_JSON_LIST):
         attribute = "a+"
     else:
         attribute = "w"
+    percentage = percent(COMPLETED_RESULTS["total_scanned"], COMPLETED_RESULTS["total_found"])
     with open(FINISHED_FILES_JSON_LIST, attribute) as res:
         data = {
             "infected": COMPLETED_RESULTS["infected_files"],
@@ -150,14 +158,15 @@ def finish_scan():
         json.dump(data, res)
     log.info("scanning finished")
     termcolor.cprint(
-        "\nSCAN RESULTS:\n{}\nTOTAL FILES SCANNED: {}\nTOTAL AMOUNT OF FILES MOVED: {}\n"
-        "TOTAL FILES UNABLE TO BE SCANNED: {}\nTOTAL INFECTED FILES FOUND: {}\n{}\n"
+        "\nSCAN RESULTS:\n{}\nFINISHED SCANNING: {}\nFILES MOVED: {}\n"
+        "UNABLE TO BE SCANNED: {}\nINFECTED FILES FOUND: {}\n"
+        "TOTAL AMOUNT OF FILES FOUND DURING SCAN: {}\nPERCENT THAT FINISHED SCANNING: {}%\n{}\n"
         "\nto see files that were unable to be scanned run: penneav --unable\n"
         "to see the files that were moved run: penneav --moved\n"
         "to see the list of infected files run: penneav --infected".format(
-            "-" * 36, COMPLETED_RESULTS["total_scanned"], len(COMPLETED_RESULTS["moved_files"]),
+            "-" * 47, COMPLETED_RESULTS["total_scanned"], len(COMPLETED_RESULTS["moved_files"]),
             len(COMPLETED_RESULTS["unable_to_scan"]), len(COMPLETED_RESULTS["infected_files"]),
-            "-" * 36
+            COMPLETED_RESULTS["total_found"], percentage, "-" * 47
     ), "green", attrs=["bold"])
 
 
@@ -166,17 +175,32 @@ def scan(start_dir, **kwargs):
     display_only_infected = kwargs.get("display_only_infected", False)
     threads = kwargs.get("threads", 12)
     move_detected = kwargs.get("move_detected", False)
+    follow_syms = kwargs.get("follow_sym", False)
+    ignored_dirs = kwargs.get("ignored_dirs", [])
+    ignored_files = kwargs.get("ignored_files", [])
 
     walked_paths = walk(start_dir, threads=threads)
 
     with Spinner():
         for data in walked_paths:
             root, subs, files = data[0], data[1], data[-1]
-            paths = [os.path.join(root, f) for f in files]
+            paths = [
+                os.path.join(root, f) for f in files if f not in ignored_files or not any(
+                    d in subs for d in ignored_dirs
+                )
+            ]
             for path in paths:
+                COMPLETED_RESULTS["total_found"] += 1
                 try:
                     if not display_only_infected:
                         log.debug("scanning file: {}".format(path))
+                    if follow_syms:
+                        if os.path.islink(path):
+                            if not display_only_infected:
+                                log.info("found symlink and following")
+                            path = os.path.realpath(path)
+                            if not display_only_infected:
+                                log.debug("real path from symlink: {}".format(path))
                     results = check_signature(path, do_beep=do_beep)
                     if results[0]:
                         COMPLETED_RESULTS["infected_files"].append(path)

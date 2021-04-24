@@ -27,7 +27,8 @@ COMPLETED_RESULTS = {
     "unable_to_scan": [],
     "moved_files": [],
     "total_scanned": 0,
-    "infected_files": []
+    "infected_files": [],
+    "total_found": 0
 }
 WHITELISTED_HASHES = (
     # empty files
@@ -49,7 +50,11 @@ WHITELISTED_HASHES = (
     "f6f2b945f6c411b02ba3da9c7ace88dcf71b6af65ba2e0d89aa82900042b5a10",
     "164c5fa8067facf1a43f09ce3d0e35ebf53a7f5723ecbf15a8667cfc53c26f6c",
     # cargo "ok" file (rust file that just says "ok" in a binary format)
-    "2689367b205c16ce32ed4200942b8b8b1e262dfc70d9bc9fbc77c49699a4f1df"
+    "2689367b205c16ce32ed4200942b8b8b1e262dfc70d9bc9fbc77c49699a4f1df",
+    # lastlog file
+    "5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef",
+    # blank file with 3 new lines in it
+    "6a3cf5192354f71615ac51034b3e97c20eda99643fcaf5bbe6d41ad59bd12167"
 )
 VERSION_NUMBERS = "0.1"
 VERSION_STRING = "dev" if VERSION_NUMBERS.count(".") > 2 else "stable"
