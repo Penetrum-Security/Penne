@@ -8,7 +8,6 @@ import os.path
 from Crypto.Random import get_random_bytes
 from Crypto.Cipher import ChaCha20_Poly1305
 from termcolor import cprint
-from penne.quarantine.db_create import check_updates
 from penne.lib.settings import (
     log,
     HOME,
