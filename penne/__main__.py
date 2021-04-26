@@ -13,7 +13,8 @@ from penne.lib.settings import (
     init,
     log,
     HOME,
-    list_files
+    list_files,
+    close
 )
 
 
@@ -24,7 +25,8 @@ def main():
     list_files(
         list_moved=opts.listMoved,
         list_infected=opts.listInfected,
-        list_unable=opts.listUnable
+        list_unable=opts.listUnable,
+        list_failed=opts.listFailed
     )
 
     print("\nstarting PenneAV at: {}\n".format(datetime.datetime.now().strftime("%m/%d/%Y %H:%M:%S")))
@@ -53,7 +55,8 @@ def main():
             move_detected=opts.moveFiles,
             follow_sym=opts.followSym,
             ignored_dirs=opts.ignoreDirs,
-            ignored_files=opts.ignoreFiles
+            ignored_files=opts.ignoreFiles,
+            do_beep=opts.turnBeepOff
         )
         finish_scan()
     if opts.sigtool:
@@ -69,7 +72,7 @@ def main():
                     f, byte_size=opts.byteSize, os_filler=opts.osFiller, no_save_sig=opts.noSaveSig,
                     warn_type=opts.warnType
                 )
-    print("\nshutting down PenneAV at: {}\n".format(datetime.datetime.now().strftime("%m/%d/%Y %H:%M:%S")))
+    close()
 
 
 if __name__ == "__main__":

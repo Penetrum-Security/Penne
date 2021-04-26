@@ -40,7 +40,7 @@ class Parser(argparse.ArgumentParser):
             help="Move files as they're detected (BE CAREFUL WITH THIS)"
         )
         scanning.add_argument(
-            "--no-beep", action="store_true", default=False, dest="turnBeepOff",
+            "--no-beep", action="store_false", default=True, dest="turnBeepOff",
             help="Pass to disable the beep upon discovering an infected file"
         )
         scanning.add_argument(
@@ -96,6 +96,7 @@ class Parser(argparse.ArgumentParser):
         misc.add_argument("--unable", dest="listUnable", action="store_true", default=False, help=argparse.SUPPRESS)
         misc.add_argument("--moved", dest="listMoved", action="store_true", default=False, help=argparse.SUPPRESS)
         misc.add_argument("--infected", dest="listInfected", default=False, action="store_true", help=argparse.SUPPRESS)
+        misc.add_argument("--failed", dest="listFailed", default=False, action="store_true", help=argparse.SUPPRESS)
         return parser.parse_args()
 
 
@@ -104,7 +105,7 @@ def verify_args(opts):
     verify that the arguments are acceptable to be run together
     """
     special_opts = (opts.initialize, opts.sigtool, opts.scanner)
-    list_opts = (opts.listUnable, opts.listMoved, opts.listInfected)
+    list_opts = (opts.listUnable, opts.listMoved, opts.listInfected, opts.listFailed)
     if any(list_opts):
         return
     special_opts_flags = ["-g/--sigtool", "-i/--initialize", "-s/--scan"]
@@ -113,7 +114,9 @@ def verify_args(opts):
         if opt:
             total += 1
     if total == 0:
-        log.error("must pass a required argument to begin, required arguments can be found in the help menu (penne -h)")
+        log.error(
+            "must pass a required argument to begin, required arguments can be found in the help menu (penneav -h)"
+        )
         sys.exit(1)
     if total != 1:
         log.error(

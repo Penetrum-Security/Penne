@@ -7,6 +7,7 @@ import random
 import hashlib
 import logging
 import zipfile
+import datetime
 
 import pefile
 import requests
@@ -28,7 +29,8 @@ COMPLETED_RESULTS = {
     "moved_files": [],
     "total_scanned": 0,
     "infected_files": [],
-    "total_found": 0
+    "total_found": 0,
+    "unable_to_cold_store": []
 }
 WHITELISTED_HASHES = (
     # empty files
@@ -54,7 +56,13 @@ WHITELISTED_HASHES = (
     # lastlog file
     "5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef",
     # blank file with 3 new lines in it
-    "6a3cf5192354f71615ac51034b3e97c20eda99643fcaf5bbe6d41ad59bd12167"
+    "6a3cf5192354f71615ac51034b3e97c20eda99643fcaf5bbe6d41ad59bd12167",
+    # cargo font files
+    "2adefcbc041e7d18fcf2d417879dc5a09997aa64d675b7a3c4b6ce33da13f3fe",
+    "7bfcab6db99d5cfbf1705ca0536ddc78585432cc5fa41bbd7ad0f009033b2979",
+    "aa58f33f239a0fb02f5c7a6c45c043d7a9ac9a093335806694ecd6d4edc0d6a8",
+    "ad6157926c1622ba4e1d03d478f1541368524bfc46f51e42fe0d945f7ef323e4",
+    "ba0c59deb5450f5cb41b3f93609ee2d0d995415877ddfa223e8a8a7533474f07"
 )
 VERSION_NUMBERS = "0.1"
 VERSION_STRING = "dev" if VERSION_NUMBERS.count(".") > 2 else "stable"
@@ -271,8 +279,8 @@ def is_apple(filename):
         if f.read(4) == b"\xcf\xfa\xed\xfe":
             return True
         f.seek(0)
-        # .lprog is usually in .ipa files
         data = f.read(200)
+        # .app and the word "Payload" is always in an ipa file
         if b".app" in data and b"Payload" in data:
             return True
     return False
@@ -367,6 +375,7 @@ def list_files(**kwargs):
     list_moved = kwargs.get("list_moved", False)
     list_infected = kwargs.get("list_infected", False)
     list_unable = kwargs.get("list_unable", False)
+    list_failed = kwargs.get("list_failed", False)
 
     s_found = "list of {} during last scan:"
     s_not_found = "no files {} during last scan"
@@ -398,8 +407,45 @@ def list_files(**kwargs):
                     for item in data["unable"]:
                         print(item)
                 else:
-                    log.info(s_not_found.format("were unable to scanned"))
+                    log.info(s_not_found.format("were unable to be scanned"))
+            if list_failed:
+                do_exit = True
+                log.info(s_found.format("files unable to be cold stored"))
+                if len(data["failed"]):
+                    for item in data["failed"]:
+                        print(item)
+                else:
+                    log.info(s_not_found.format("were unable to be cold stored"))
     if do_exit:
         exit(1)
     else:
         pass
+
+
+def pause(filename=None):
+    """
+    pauses the scan and continues exits, or skips the file
+    """
+    res = input(
+        "\b\b[ INFO ][ {} ] you have paused the Penne scan do you want to (C)ontinue/e(X)it/(S)kip the file: ".format(
+            datetime.date.today().strftime("%d-%b-%Y %H:%M:%S")
+        )
+    ).lower()
+    if res == "c":
+        log.info("continuing from current location in scan")
+        return True
+    elif res == "x":
+        close()
+    elif res == "s":
+        log.info("skipping filename: {}".format(filename))
+        return None
+    else:
+        return True
+
+
+def close():
+    """
+    close the program safely
+    """
+    print("\nshutting down PenneAV at: {}\n".format(datetime.datetime.now().strftime("%m/%d/%Y %H:%M:%S")))
+    sys.exit()

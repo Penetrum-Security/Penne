@@ -27,11 +27,12 @@ from penne.lib.settings import (
     get_hash,
     DEFAULT_MOVE_DIRECTORY,
     COMPLETED_RESULTS,
-    FINISHED_FILES_JSON_LIST
+    FINISHED_FILES_JSON_LIST,
+    random_string,
+    pause
 )
 from penne.quarantine.noodler import spicy_file
 from penne.quarantine.db_create import pull_sig
-from penne.lib.spinner import Spinner
 
 
 def walk(top, threads=12):
@@ -97,6 +98,11 @@ def walk(top, threads=12):
             threads -= 1
 
 
+def do_yara_rule_check(filename, api_key):
+    # TODO:/
+    pass
+
+
 def do_quarn(f, detection_type, arch, detected_as):
     parts = pathlib.Path(f)
     filename = parts.name
@@ -104,6 +110,8 @@ def do_quarn(f, detection_type, arch, detected_as):
     quarantine_results = spicy_file(path, filename, detection_type, arch, detected_as)
     if quarantine_results["Success"]:
         log.info("file sent to cold storage at: {}".format(quarantine_results["ColdFile"]))
+    else:
+        log.warn("we were unable to send file to cold storage")
 
 
 def check_signature(filename, do_beep=True):
@@ -116,7 +124,7 @@ def check_signature(filename, do_beep=True):
                 if do_beep:
                     beep()
                 termcolor.cprint(
-                    "Match found:\nPath: {}\nOS Type: {}\nSHA-256: {}\nWarning Type: {}".format(
+                    "\nMatch found:\nPath: {}\nOS Type: {}\nSHA-256: {}\nWarning Type: {}\n".format(
                         filename, matches['OS'], matches['Hash'], matches['Warning']
                     )
                 )
@@ -124,15 +132,24 @@ def check_signature(filename, do_beep=True):
     return False, None
 
 
-def move_detected_file(source, detection, arch, detected_as="EVIL AF"):
+def move_detected_file(source, detection, detected_as="EVIL AF"):
+    architecture = platform.architecture()
     file_dest_hash = get_hash(source)
-    file_dest_path = "{}/{}".format(DEFAULT_MOVE_DIRECTORY, file_dest_hash)
-    shutil.copy(source, file_dest_path)
+    file_dest_path = "{}/{}_{}".format(DEFAULT_MOVE_DIRECTORY, file_dest_hash, random_string(length=30))
     try:
-        os.chmod(file_dest_path, S_IREAD|S_IRGRP|S_IROTH)
+        shutil.move(source, file_dest_path)
+    except:
+        log.warning("unable to move file, going to copy it instead and change originals permissions to read only")
+        shutil.copy(source, file_dest_path)
+        try:
+            os.chmod(source, S_IREAD | S_IRGRP | S_IROTH)
+        except:
+            log.error("unable to change original source files permissions ({})".format(source))
+    try:
+        os.chmod(file_dest_path, S_IREAD | S_IRGRP | S_IROTH)
     except:
         log.warn("unable to change file attributes to read only")
-    do_quarn(source, detection, arch, detected_as)
+    do_quarn(source, detection, architecture, detected_as)
     return file_dest_path
 
 
@@ -144,6 +161,18 @@ def finish_scan():
         except:
             return 100 * part/whole
 
+    def show_opts():
+        retval = ""
+        if len(COMPLETED_RESULTS["infected_files"]) != 0:
+            retval += "to see the list of infected files run: penneav --infected\n"
+        if len(COMPLETED_RESULTS["moved_files"]) != 0:
+            retval += "to see the files that were moved run: penneav --moved\n"
+        if len(COMPLETED_RESULTS["unable_to_scan"]) != 0:
+            retval += "to see files that were unable to be scanned run: penneav --unable\n"
+        if len(COMPLETED_RESULTS["unable_to_cold_store"]) != 0:
+            retval += "to see the files that failed cold storage run: penneav --failed\n"
+        return retval
+
     if not os.path.exists(FINISHED_FILES_JSON_LIST):
         attribute = "a+"
     else:
@@ -153,21 +182,35 @@ def finish_scan():
         data = {
             "infected": COMPLETED_RESULTS["infected_files"],
             "unable": COMPLETED_RESULTS["unable_to_scan"],
-            "moved": COMPLETED_RESULTS["moved_files"]
+            "moved": COMPLETED_RESULTS["moved_files"],
+            "failed": COMPLETED_RESULTS["unable_to_cold_store"]
         }
         json.dump(data, res)
     log.info("scanning finished")
     termcolor.cprint(
-        "\nSCAN RESULTS:\n{}\nFINISHED SCANNING: {}\nFILES MOVED: {}\n"
-        "UNABLE TO BE SCANNED: {}\nINFECTED FILES FOUND: {}\n"
-        "TOTAL AMOUNT OF FILES FOUND DURING SCAN: {}\nPERCENT THAT FINISHED SCANNING: {}%\n{}\n"
-        "\nto see files that were unable to be scanned run: penneav --unable\n"
-        "to see the files that were moved run: penneav --moved\n"
-        "to see the list of infected files run: penneav --infected".format(
-            "-" * 47, COMPLETED_RESULTS["total_scanned"], len(COMPLETED_RESULTS["moved_files"]),
-            len(COMPLETED_RESULTS["unable_to_scan"]), len(COMPLETED_RESULTS["infected_files"]),
-            COMPLETED_RESULTS["total_found"], percentage, "-" * 47
-    ), "green", attrs=["bold"])
+        "\n\nSCAN RESULTS:\n"
+        "{}\n"
+        "FINISHED SCANNING: {}\n"
+        "FILES MOVED: {}\n"
+        "UNABLE TO BE SCANNED: {}\n"
+        "INFECTED FILES FOUND: {}\n"
+        "FAILED COLD STORAGE: {}\n"
+        "TOTAL AMOUNT OF FILES FOUND DURING SCAN: {}\n"
+        "PERCENT THAT FINISHED SCANNING: {}%"
+        "\n{}\n"
+        "\n"
+        "{}".format(
+            "-" * 47,
+            COMPLETED_RESULTS["total_scanned"],
+            len(COMPLETED_RESULTS["moved_files"]),
+            len(COMPLETED_RESULTS["unable_to_scan"]),
+            len(COMPLETED_RESULTS["infected_files"]),
+            len(COMPLETED_RESULTS["unable_to_cold_store"]),
+            COMPLETED_RESULTS["total_found"],
+            percentage,
+            "-" * 47, show_opts()
+        ), "green", attrs=["bold"]
+    )
 
 
 def scan(start_dir, **kwargs):
@@ -181,15 +224,13 @@ def scan(start_dir, **kwargs):
 
     walked_paths = walk(start_dir, threads=threads)
 
-    with Spinner():
-        for data in walked_paths:
-            root, subs, files = data[0], data[1], data[-1]
-            paths = [
-                os.path.join(root, f) for f in files if f not in ignored_files or not any(
-                    d in subs for d in ignored_dirs
-                )
-            ]
-            for path in paths:
+    for data in walked_paths:
+        root, subs, files = data[0], data[1], data[-1]
+        paths = [
+            os.path.join(root, f) for f in files if f not in ignored_files or d not in os.path.join(root, f) for d in ignored_dirs
+        ]
+        for path in paths:
+            try:
                 COMPLETED_RESULTS["total_found"] += 1
                 try:
                     if not display_only_infected:
@@ -205,12 +246,16 @@ def scan(start_dir, **kwargs):
                     if results[0]:
                         COMPLETED_RESULTS["infected_files"].append(path)
                         if move_detected:
-                            moved_to = move_detected_file(
-                                path, results[1], platform.platform().architecture
-                            )
+                            moved_to = move_detected_file(path, results[1])
                             log.info("file marked to be moved and moved to: {}".format(moved_to))
                             COMPLETED_RESULTS["moved_files"].append(path)
                     COMPLETED_RESULTS["total_scanned"] += 1
                 except Exception:
                     log.error("unable to finish file scanning on filename: {}".format(path))
                     COMPLETED_RESULTS["unable_to_scan"].append(path)
+            except KeyboardInterrupt:
+                results = pause(filename=path)
+                if results:
+                    continue
+                else:
+                    pass
