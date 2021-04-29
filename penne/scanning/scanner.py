@@ -5,7 +5,6 @@ from __future__ import division
 from __future__ import print_function
 
 import os
-import sys
 import json
 import shutil
 import pathlib
@@ -20,6 +19,7 @@ from stat import (
 )
 
 import termcolor
+import requests
 
 from penne.lib.settings import (
     log,
@@ -29,7 +29,9 @@ from penne.lib.settings import (
     COMPLETED_RESULTS,
     FINISHED_FILES_JSON_LIST,
     random_string,
-    pause
+    pause,
+    WORKERS,
+    StoppableThread
 )
 from penne.quarantine.noodler import spicy_file
 from penne.quarantine.db_create import pull_sig
@@ -74,18 +76,18 @@ def walk(top, threads=12):
                 with lock:
                     output.append((path, dirs, files))
                     on_output.notify()
-            except OSError as e:
-                print(e, file=sys.stderr)
+            except OSError:
+                pass
             finally:
                 with lock:
                     state['tasks'] -= 1
                     if not state['tasks']:
                         on_input.notifyAll()
 
-    workers = [threading.Thread(target=worker,
-                                name="fastio.walk %d %s" % (i, top))
-               for i in range(threads)]
-    for w in workers:
+    tmp_worker = [StoppableThread(target=worker, name="penneio.stoppable.walk %d %s" % (i, top)) for i in range(threads)]
+    for w in tmp_worker:
+        WORKERS.append(w)
+    for w in WORKERS:
         w.start()
     while threads or output:
         with lock:
@@ -98,9 +100,20 @@ def walk(top, threads=12):
             threads -= 1
 
 
-def do_yara_rule_check(filename, api_key):
-    # TODO:/
-    pass
+def do_yara_rule_check(filename, api_key, url):
+    if api_key is not None and api_key != "API-KEY-FILLER" and url is not None:
+        data = {"filename1": open(filename, "rb")}
+        req = requests.post(url, files=data)
+    else:
+        req = None
+    if req is not None:
+        try:
+            return req.json()
+        except:
+            log.error("unable to perform yara assessment on file: {}".format(filename))
+    else:
+        return None
+
 
 
 def do_quarn(f, detection_type, arch, detected_as):
@@ -157,9 +170,12 @@ def finish_scan():
 
     def percent(part, whole):
         try:
-            return str(100 * part/whole)[0:5]
-        except:
-            return 100 * part/whole
+            try:
+                return str(100 * part/whole)[0:5]
+            except:
+                return 100 * part/whole
+        except ZeroDivisionError:
+            return 0
 
     def show_opts():
         retval = ""
@@ -221,6 +237,8 @@ def scan(start_dir, **kwargs):
     follow_syms = kwargs.get("follow_sym", False)
     ignored_dirs = kwargs.get("ignored_dirs", [])
     ignored_files = kwargs.get("ignored_files", [])
+    api_key = kwargs.get("api_key", "API_KEY_FILLER")
+    api_url = kwargs.get("api_url", None)
 
     walked_paths = walk(start_dir, threads=threads)
 
@@ -251,8 +269,13 @@ def scan(start_dir, **kwargs):
                             COMPLETED_RESULTS["moved_files"].append(path)
                     COMPLETED_RESULTS["total_scanned"] += 1
                 except Exception:
-                    log.error("unable to finish file scanning on filename: {}".format(path))
+                    if not display_only_infected:
+                        log.error("unable to finish file scanning on filename: {}".format(path))
                     COMPLETED_RESULTS["unable_to_scan"].append(path)
+                yara_rule_results = do_yara_rule_check(path, api_key, api_url)
+                if yara_rule_results is not None:
+                    # TODO :/
+                    pass
             except KeyboardInterrupt:
                 results = pause(filename=path)
                 if results:

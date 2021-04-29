@@ -3,15 +3,54 @@
 import os
 import sys
 import json
+import ctypes
 import random
 import hashlib
 import logging
 import zipfile
 import datetime
+import threading
 
 import pefile
 import requests
 from penne.lib.spinner import Spinner
+
+
+class StoppableThread(threading.Thread):
+
+    """
+    dirty hack to kill threads in place
+    """
+
+    def __init__(self, *args, **kwargs):
+        super(StoppableThread, self).__init__(*args, **kwargs)
+        self._stop_thread_event = threading.Event()
+        self.killed = False
+
+    def get_id(self):
+        """
+        get the threads ID in order to kill it successfully
+        """
+        if hasattr(self, '_thread_id'):
+            return self._thread_id
+        for i, thread in threading._active.items():
+            if thread is self:
+                return i
+        log.error("could not determine the threads ID")
+
+    def stop(self, exectype=SystemExit):
+        """
+        stop the thread in place by raising a SystemExit exception in them
+        """
+        thread_id = self.get_id()
+        self.join()
+        killer = ctypes.pythonapi.PyThreadState_SetAsyncExc(ctypes.c_long(thread_id), ctypes.py_object(exectype))
+        if killer == 0:
+            log.error("invalid thread ID presented, skipping")
+        elif killer != 1:
+            ctypes.pythonapi.PyThreadState_SetAsyncExc(ctypes.c_long(thread_id), None)
+            log.info("error killing thread: {}".format(thread_id))
+
 
 log_format = "[ %(levelname)s ][ %(asctime)s ] %(message)s"
 log = logging.getLogger(__name__)
@@ -24,6 +63,7 @@ CONFIG_FILE_PATH = "{}/penne.json".format(HOME)
 DEFAULT_MOVE_DIRECTORY = "{}/backups".format(HOME)
 HASHSUM_FILE = "{}/hashsums.txt".format(HOME)
 FINISHED_FILES_JSON_LIST = "{}/finished.json".format(HOME)
+WORKERS = []
 COMPLETED_RESULTS = {
     "unable_to_scan": [],
     "moved_files": [],
@@ -435,7 +475,7 @@ def pause(filename=None):
         log.info("continuing from current location in scan")
         return True
     elif res == "x":
-        close()
+        stop_threads()
     elif res == "s":
         log.info("skipping filename: {}".format(filename))
         return None
@@ -449,3 +489,18 @@ def close():
     """
     print("\nshutting down PenneAV at: {}\n".format(datetime.datetime.now().strftime("%m/%d/%Y %H:%M:%S")))
     sys.exit()
+
+
+def stop_threads():
+    """
+    stop threads and exit the program or exit forcibly
+    """
+    try:
+        log.debug("waiting for threads to stop (press CNTRL-C again (x2) to forcibly exit)")
+        # I'm a mother fucking genius
+        _ = [w.join() and w.stop() for w in WORKERS]
+        log.info("threads stopped, exiting")
+        close()
+    except KeyboardInterrupt:
+        log.error("user forcibly exited before killing threads")
+        close()
