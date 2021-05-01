@@ -26,6 +26,7 @@ def spicy_file(path, filename, detection_type, arch, detected_as):
         nonce = get_random_bytes(24) # max length for Nonce.
         try:
             if key is not None:
+                from db_create import insert_blob
                 # Will upgrade to XChaCha_Poly1305 as its more secure than ChaCha20_poly1305
                 cipher = ChaCha20_Poly1305.new(key=key, nonce=nonce)
                 # outfiles are stored under the name K-encryption-key__N-nonce__O-original-filename.cold
@@ -39,6 +40,7 @@ def spicy_file(path, filename, detection_type, arch, detected_as):
                         # any/all data encrypted by penne.
                         ct, tag = cipher.encrypt_and_digest(line)
                         dest.write(ct)
+                insert_blob(ct, outFile, path, filename, True, False, nonce, key, tag, detected_as)
                 return {
                     "Success": True,
                     "Encrypted": True,
@@ -92,9 +94,7 @@ def cold_file(user_upload_consent, encrypted, key, nonce, tag, sample):
             and isinstance(nonce, str) and isinstance(tag, str) and isinstance(sample, str):
         # only really checking for user upload consent here, as this is where we will flow logic to upload or not.
         if not user_upload_consent:
-            from db_create import insert_blob
-            cprint("[ !! ] Inserting that spicy meatball into the DB [ !! ]", "red",
-                   attrs=['dark'])
+            pass
         elif user_upload_consent:
             do_check = check_prem()
             if do_check["Success"] is not False:
@@ -120,8 +120,8 @@ def cold_file(user_upload_consent, encrypted, key, nonce, tag, sample):
                     cprint("[ ** ] Something was wrong. {} [ ** ]".format(callOut.status_code), "red", attrs=['dark'])
             else:
                 cprint("[ !! ] You need an API key to upload [ !! ]", "red", attrs=['dark'])
-        else:
-            cprint("[ !! ] Please check your inputs. [ !! ]", "red", attrs=['dark'])
+    else:
+        cprint("[ !! ] Please check your inputs. [ !! ]", "red", attrs=['dark'])
 
 
 def check_prem():
