@@ -5,6 +5,7 @@ import datetime
 import json
 import os.path
 
+import requests
 from Crypto.Random import get_random_bytes
 from Crypto.Cipher import ChaCha20_Poly1305
 from termcolor import cprint
@@ -21,8 +22,8 @@ def spicy_file(path, filename, detection_type, arch, detected_as):
     if path is not None and filename is not None and detection_type is not None and detected_as is not None and arch is not None:
         full_path = "{}/{}".format(path, filename)
         cprint("[ !! ] THATS ONE SPICY MEATBALL, TRYING TO COOL IT DOWN [ !! ]", "blue", attrs=['dark', 'bold'])
-        key = get_random_bytes(32)
-        nonce = get_random_bytes(24)
+        key = get_random_bytes(32) # currently limited to 32 bytes, should be strong enough.
+        nonce = get_random_bytes(24) # max length for Nonce.
         try:
             if key is not None:
                 # Will upgrade to XChaCha_Poly1305 as its more secure than ChaCha20_poly1305
@@ -86,25 +87,72 @@ def spicy_file(path, filename, detection_type, arch, detected_as):
             }
 
 
-def cold_file(sqlitedb, user_upload_consent, encrypted):
-    if isinstance(encrypted, bool) and isinstance(user_upload_consent, bool):
-        if encrypted and not user_upload_consent and sqlitedb:
-            print()
-        elif not encrypted and user_upload_consent and not sqlitedb:
-            print()
+def cold_file(user_upload_consent, encrypted, key, nonce, tag, sample):
+    if isinstance(encrypted, bool) and isinstance(user_upload_consent, bool) and isinstance(key, str)\
+            and isinstance(nonce, str) and isinstance(tag, str) and isinstance(sample, str):
+        if encrypted and not user_upload_consent:
+            from db_create import insert_blob
+            cprint("[ !! ] Inserting that spicy meatball into the DB [ !! ]", "red",
+                   attrs=['dark'])
+        elif not encrypted and user_upload_consent:
+            do_check = check_prem()
+            if do_check["Success"] is not False:
+                cprint("[ !! ] Checking API Key [ !! ]", "blue", attrs=['dark'])
+                payload = {
+                    "API_KEY": "{}".format(do_check["API_KEY"]),
+                    "Sample": "{}".format(sample),
+                    "Encrypted": "{}".format(encrypted),
+                    "Key": "{}".format(key),
+                    "Nonce": "{}".format(nonce),
+                    "Tag": "{}".format(tag)
+                }
+                header = {
+                    "Content-Type":"text/json",
+                    "Accept": "*/*",
+                    "Content-Length": len(payload),
+                    "Connection": "Close"
+                }
+                callOut = requests.get("someurl_that_we_will_fix_later", data=payload, headers=header)
+                if callOut.status_code is requests.codes.request_ok:
+                    cprint("[ !! ] Request was successful! [ !! ]", "green", attrs=['dark'])
+                else:
+                    cprint("[ ** ] Something was wrong. {} [ ** ]".format(callOut.status_code), "red", attrs=['dark'])
+            else:
+                cprint("[ !! ] You need an API key to upload [ !! ]", "red", attrs=['dark'])
         else:
-            print()
+            cprint("[ !! ] Please check your inputs. [ !! ]", "red", attrs=['dark'])
 
 
 def check_prem():
     from penne.lib.settings import CONFIG_FILE_PATH, download_default_config
-    if CONFIG_FILE_PATH is not None:
-        if os.path.isfile(CONFIG_FILE_PATH):
-            configfile = json.loads(CONFIG_FILE_PATH)
-            api_key = configfile['config']['penne_common']
-            return api_key['malcore_api_key']
+    if CONFIG_FILE_PATH is not None or os.path.isfile(CONFIG_FILE_PATH):
+        cprint("[ !! ] Appears as though your config is in the right spot! [ !! ]", "blue", attrs=['dark'])
+    else:
+        cprint("[ + ] YOUR DEFAULT CONFIG IS MISSING. [ + ]", "red", attrs=['dark', 'bold'])
+        download_default_config()
+    try:
+        configfile = json.loads(CONFIG_FILE_PATH)
+        api_key = configfile['config']['penne_common']
+        if api_key is not None:
+            cprint("[ * ] It looks like you have an API key in your config file! Thank you, proceeding.", "blue",
+                   attrs=['dark'])
+            return {
+                "Success": True,
+                "API_KEY": api_key['malcore_api_key']
+            }
         else:
-            cprint("[ + ] YOUR DEFAULT CONFIG IS MISSING. [ + ]", "red", attrs=['dark', 'bold'])
-            download_default_config()
+            cprint("[ !! ] Looks like your API key is not in the config file... :( If you do not have one", "red",
+                   attrs=['dark'])
+            cprint("Please do not hesitate to get one from https://penetrum.com/ [ !! ]", "red", attrs=['dark'])
+            return {
+                "Success": False,
+                "API_KEY": None
+            }
+    except Exception as e:
+        log.critical("[ !! ] There was an error in check_prem {} [ !! ]".format(e))
+        return {
+            "Success": False,
+            "API_KEY": None
+        }
 
 
