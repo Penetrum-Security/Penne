@@ -40,7 +40,14 @@ def spicy_file(path, filename, detection_type, arch, detected_as):
                         # any/all data encrypted by penne.
                         ct, tag = cipher.encrypt_and_digest(line)
                         dest.write(ct)
-                insert_blob(ct, outFile, path, filename, True, False, nonce, key, tag, detected_as)
+                a = input("Do we need to upload?")
+                to_upload = {"APIKEY": check_prem()['API_KEY'], "Upload": False}
+                if a.lower() == 'n':
+                    pass
+                else:
+                    to_upload.update({'Upload': True})
+                insert_blob(ct, outFile, path, filename, True, to_upload,
+                            nonce, key, tag, detected_as)
                 return {
                     "Success": True,
                     "Encrypted": True,
