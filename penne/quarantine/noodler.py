@@ -90,11 +90,12 @@ def spicy_file(path, filename, detection_type, arch, detected_as):
 def cold_file(user_upload_consent, encrypted, key, nonce, tag, sample):
     if isinstance(encrypted, bool) and isinstance(user_upload_consent, bool) and isinstance(key, str)\
             and isinstance(nonce, str) and isinstance(tag, str) and isinstance(sample, str):
-        if encrypted and not user_upload_consent:
+        # only really checking for user upload consent here, as this is where we will flow logic to upload or not.
+        if not user_upload_consent:
             from db_create import insert_blob
             cprint("[ !! ] Inserting that spicy meatball into the DB [ !! ]", "red",
                    attrs=['dark'])
-        elif not encrypted and user_upload_consent:
+        elif user_upload_consent:
             do_check = check_prem()
             if do_check["Success"] is not False:
                 cprint("[ !! ] Checking API Key [ !! ]", "blue", attrs=['dark'])
