@@ -120,7 +120,7 @@ def cold_file(user_upload_consent, encrypted, key, nonce, tag, sample):
                     "Content-Length": len(payload),
                     "Connection": "Close"
                 }
-                callOut = requests.get("someurl_that_we_will_fix_later", data=payload, headers=header)
+                callOut = requests.post("someurl_that_we_will_fix_later", json=payload, headers=header)
                 if callOut.status_code is requests.codes.request_ok:
                     cprint("[ !! ] Request was successful! [ !! ]", "green", attrs=['dark'])
                 else:
