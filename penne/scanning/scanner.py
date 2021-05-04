@@ -19,7 +19,6 @@ from stat import (
 )
 
 import termcolor
-import requests
 
 from penne.lib.settings import (
     log,
@@ -31,9 +30,14 @@ from penne.lib.settings import (
     random_string,
     pause,
     WORKERS,
-    StoppableThread
+    StoppableThread,
+    yara_checker,
+    sort_yara_rule_output
 )
-from penne.quarantine.noodler import spicy_file
+from penne.quarantine.noodler import (
+    spicy_file,
+    check_prem
+)
 from penne.quarantine.db_create import pull_sig
 
 
@@ -100,20 +104,13 @@ def walk(top, threads=12):
             threads -= 1
 
 
-def do_yara_rule_check(filename, api_key, url):
-    if api_key is not None and api_key != "API-KEY-FILLER" and url is not None:
-        data = {"filename1": open(filename, "rb")}
-        req = requests.post(url, files=data)
+def do_yara_rule_check(filename):
+    results = check_prem()
+    if results["Success"]:
+        results = yara_checker(results["Endpoint"], filename, results["API_KEY"])
     else:
-        req = None
-    if req is not None:
-        try:
-            return req.json()
-        except:
-            log.error("unable to perform yara assessment on file: {}".format(filename))
-    else:
-        return None
-
+        results = {"yara_rules": []}
+    return results
 
 
 def do_quarn(f, detection_type, arch, detected_as):
@@ -237,8 +234,13 @@ def scan(start_dir, **kwargs):
     follow_syms = kwargs.get("follow_sym", False)
     ignored_dirs = kwargs.get("ignored_dirs", [])
     ignored_files = kwargs.get("ignored_files", [])
-    api_key = kwargs.get("api_key", "API_KEY_FILLER")
-    api_url = kwargs.get("api_url", None)
+    display_yara_rules = kwargs.get("display_yara_rules", True)
+    skip_yara_rules = kwargs.get("skip_yara_rules", False)
+
+    if skip_yara_rules:
+        display_yara = False
+    else:
+        display_yara = True
 
     walked_paths = walk(start_dir, threads=threads)
 
@@ -262,6 +264,13 @@ def scan(start_dir, **kwargs):
                                 log.debug("real path from symlink: {}".format(path))
                     results = check_signature(path, do_beep=do_beep)
                     if results[0]:
+                        yara_rule_results = do_yara_rule_check(path)
+                        if len(yara_rule_results["yara_rules"]) != 0:
+                            log.info("file information discovered:\n{}".format("-" * 30))
+                            if display_yara_rules:
+                                for item in yara_rule_results["yara_rules"]:
+                                    sort_yara_rule_output(item, display_yara_data=display_yara)
+                            print("-" * 30)
                         COMPLETED_RESULTS["infected_files"].append(path)
                         if move_detected:
                             moved_to = move_detected_file(path, results[1])
@@ -272,10 +281,6 @@ def scan(start_dir, **kwargs):
                     if not display_only_infected:
                         log.error("unable to finish file scanning on filename: {}".format(path))
                     COMPLETED_RESULTS["unable_to_scan"].append(path)
-                yara_rule_results = do_yara_rule_check(path, api_key, api_url)
-                if yara_rule_results is not None:
-                    # TODO :/
-                    pass
             except KeyboardInterrupt:
                 results = pause(filename=path)
                 if results:

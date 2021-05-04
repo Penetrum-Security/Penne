@@ -67,6 +67,15 @@ class Parser(argparse.ArgumentParser):
             "--ignore-files", nargs="+", dest="ignoreFiles", default=[],
             help="Pass a list of files you want to ignore, default is None"
         )
+        scanning.add_argument(
+            "-y", "--display-yara-rules", action="store_true", default=False,
+            help="Pass this flag to display each yara rule sent, default is to be saved in a json file under "
+                 "PENNE_HOME/db/json_results (WARNING: WILL MAKE OUTPUT VERY VERBOSE)"
+        )
+        scanning.add_argument(
+            "-sY", "--skip-yara", default=False, action="store_true",
+            help="Pass this to skip yara rule checking"
+        )
         sigtool = parser.add_argument_group("Sigtool Arguments")
         sigtool.add_argument(
             "-w", "--warning", dest="warnType", default="DETECT",

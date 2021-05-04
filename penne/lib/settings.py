@@ -504,3 +504,39 @@ def stop_threads():
     except KeyboardInterrupt:
         log.error("user forcibly exited before killing threads")
         close()
+
+
+def yara_checker(url, filename, api_key):
+    if api_key is not None:
+        headers = {"Malnet-Api-Key": api_key}
+    else:
+        headers = {}
+    file_data = {"filename1": open(filename, "rb")}
+    try:
+        req = requests.post(url, files=file_data, headers=headers)
+    except:
+        req = None
+    if req is not None:
+        return req.json()
+    else:
+        return {"yara_rules": []}
+
+
+def sort_yara_rule_output(rules_data, display_yara_data):
+    name, description = rules_data
+    if name == "custom YARA rule":
+        conf = init()
+        file_path = "{}/{}.yar".format(
+            conf["config"]["penne_folders"]["yara_rule_results"].format(HOME), random_string(length=45)
+        )
+        with open(file_path, "a+") as f:
+            if "disclaimer" in description:
+                log.warning("this yara rule may not be reliable")
+            f.write(description)
+            log.info("yara has been generated for passed file and saved under: {}".format(file_path))
+    else:
+        if display_yara_data:
+            if description != "N/A":
+                print(" - {}".format(description))
+            else:
+                print(" - {}".format(name))

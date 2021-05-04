@@ -26,7 +26,7 @@ def spicy_file(path, filename, detection_type, arch, detected_as):
         nonce = get_random_bytes(24) # max length for Nonce.
         try:
             if key is not None:
-                from db_create import insert_blob
+                from .db_create import insert_blob
                 # Will upgrade to XChaCha_Poly1305 as its more secure than ChaCha20_poly1305
                 cipher = ChaCha20_Poly1305.new(key=key, nonce=nonce)
                 # outfiles are stored under the name K-encryption-key__N-nonce__O-original-filename.cold
@@ -133,34 +133,32 @@ def cold_file(user_upload_consent, encrypted, key, nonce, tag, sample):
 
 def check_prem():
     from penne.lib.settings import CONFIG_FILE_PATH, download_default_config
-    if CONFIG_FILE_PATH is not None or os.path.isfile(CONFIG_FILE_PATH):
-        cprint("[ !! ] Appears as though your config is in the right spot! [ !! ]", "blue", attrs=['dark'])
+    if CONFIG_FILE_PATH is not None and os.path.isfile(CONFIG_FILE_PATH):
+        pass
     else:
-        cprint("[ + ] YOUR DEFAULT CONFIG IS MISSING. [ + ]", "red", attrs=['dark', 'bold'])
         download_default_config()
     try:
-        configfile = json.loads(CONFIG_FILE_PATH)
+        configfile = json.load(open(CONFIG_FILE_PATH))
         api_key = configfile['config']['penne_common']
-        if api_key is not None:
-            cprint("[ * ] It looks like you have an API key in your config file! Thank you, proceeding.", "blue",
-                   attrs=['dark'])
+        if api_key is not None and api_key != "API-KEY-FILLER":
             return {
                 "Success": True,
-                "API_KEY": api_key['malcore_api_key']
+                "API_KEY": api_key['malcore_api_key'],
+                "Endpoint": api_key["api_endpoint"]
             }
         else:
-            cprint("[ !! ] Looks like your API key is not in the config file... :( If you do not have one", "red",
-                   attrs=['dark'])
             cprint("Please do not hesitate to get one from https://penetrum.com/ [ !! ]", "red", attrs=['dark'])
             return {
                 "Success": False,
-                "API_KEY": None
+                "API_KEY": None,
+                "Endpoint": None
             }
     except Exception as e:
         log.critical("[ !! ] There was an error in check_prem {} [ !! ]".format(e))
         return {
             "Success": False,
-            "API_KEY": None
+            "API_KEY": None,
+            "Endpoint": None
         }
 
 
