@@ -32,7 +32,9 @@ from penne.lib.settings import (
     WORKERS,
     StoppableThread,
     yara_checker,
-    sort_yara_rule_output
+    sort_yara_rule_output,
+    load_user_defined,
+    contains
 )
 from penne.quarantine.noodler import (
     spicy_file,
@@ -124,7 +126,19 @@ def do_quarn(f, detection_type, arch, detected_as):
         log.warn("we were unable to send file to cold storage")
 
 
-def check_signature(filename, do_beep=True):
+def run_user_defined(filename, user_defined_list):
+    signature_list = user_defined_list
+    for signature in signature_list:
+        with open(signature) as sig, open(filename, "rb") as src:
+            data = sig.read().split(":")
+            _, type_, bytes_read, os_filler, signature_ = data[0], data[1], int(data[2]), data[3], data[4]
+            src_data = binascii.hexlify(src.read(bytes_read))
+            if src_data == signature_:
+                return os_filler, get_hash(filename), type_
+    return None
+
+
+def check_signature(filename, do_beep=True, user_defined_list=[]):
     byte_sizes = (1024, 2048, 4096)
     with open(filename, "rb") as f:
         for b in byte_sizes:
@@ -138,8 +152,19 @@ def check_signature(filename, do_beep=True):
                         filename, matches['OS'], matches['Hash'], matches['Warning']
                     )
                 )
-                return True, matches["Warning"]
-    return False, None
+                retval = [True, matches["Warning"]]
+            else:
+                results = run_user_defined(filename, user_defined_list)
+                if results is not None:
+                    termcolor.cprint(
+                        "\nUser Defined Match found:\nPath: {}\nOS Type: {}\nSHA-256: {}\nWarning Type: {}\n".format(
+                            filename, results[0], results[1], results[-1]
+                        )
+                    )
+                    retval = [True, results[-1]]
+                else:
+                    retval = [False, None]
+    return retval
 
 
 def move_detected_file(source, detection, detected_as="EVIL AF"):
@@ -243,47 +268,53 @@ def scan(start_dir, **kwargs):
         display_yara = True
 
     walked_paths = walk(start_dir, threads=threads)
+    
+    user_defined = load_user_defined()
+    log.info("loaded a total of {} user defined signature(s)".format(len(user_defined)))
 
     for data in walked_paths:
         root, subs, files = data[0], data[1], data[-1]
         paths = [
-            os.path.join(root, f) for f in files if f not in ignored_files or d not in os.path.join(root, f) for d in ignored_dirs
+            os.path.join(root, f) for f in files if f not in ignored_files
         ]
         for path in paths:
-            try:
-                COMPLETED_RESULTS["total_found"] += 1
+            if not contains(path, ignored_dirs):
                 try:
-                    if not display_only_infected:
-                        log.debug("scanning file: {}".format(path))
-                    if follow_syms:
-                        if os.path.islink(path):
-                            if not display_only_infected:
-                                log.info("found symlink and following")
-                            path = os.path.realpath(path)
-                            if not display_only_infected:
-                                log.debug("real path from symlink: {}".format(path))
-                    results = check_signature(path, do_beep=do_beep)
-                    if results[0]:
-                        yara_rule_results = do_yara_rule_check(path)
-                        if len(yara_rule_results["yara_rules"]) != 0:
-                            log.info("file information discovered:\n{}".format("-" * 30))
-                            if display_yara_rules:
-                                for item in yara_rule_results["yara_rules"]:
-                                    sort_yara_rule_output(item, display_yara_data=display_yara)
-                            print("-" * 30)
-                        COMPLETED_RESULTS["infected_files"].append(path)
-                        if move_detected:
-                            moved_to = move_detected_file(path, results[1])
-                            log.info("file marked to be moved and moved to: {}".format(moved_to))
-                            COMPLETED_RESULTS["moved_files"].append(path)
-                    COMPLETED_RESULTS["total_scanned"] += 1
-                except Exception:
-                    if not display_only_infected:
-                        log.error("unable to finish file scanning on filename: {}".format(path))
-                    COMPLETED_RESULTS["unable_to_scan"].append(path)
-            except KeyboardInterrupt:
-                results = pause(filename=path)
-                if results:
-                    continue
-                else:
-                    pass
+                    COMPLETED_RESULTS["total_found"] += 1
+                    try:
+                        if not display_only_infected:
+                            log.debug("scanning file: {}".format(path))
+                        if follow_syms:
+                            if os.path.islink(path):
+                                if not display_only_infected:
+                                    log.info("found symlink and following")
+                                path = os.path.realpath(path)
+                                if not display_only_infected:
+                                    log.debug("real path from symlink: {}".format(path))
+                        results = check_signature(path, do_beep=do_beep, user_defined_list=user_defined)
+                        if results[0]:
+                            yara_rule_results = do_yara_rule_check(path)
+                            if len(yara_rule_results["yara_rules"]) != 0:
+                                log.info("file information discovered:\n{}".format("-" * 30))
+                                if display_yara_rules:
+                                    for item in yara_rule_results["yara_rules"]:
+                                        sort_yara_rule_output(item, display_yara_data=display_yara)
+                                print("-" * 30)
+                            COMPLETED_RESULTS["infected_files"].append(path)
+                            if move_detected:
+                                moved_to = move_detected_file(path, results[1])
+                                log.info("file marked to be moved and moved to: {}".format(moved_to))
+                                COMPLETED_RESULTS["moved_files"].append(path)
+                        COMPLETED_RESULTS["total_scanned"] += 1
+                    except Exception:
+                        if not display_only_infected:
+                            log.error("unable to finish file scanning on filename: {}".format(path))
+                        COMPLETED_RESULTS["unable_to_scan"].append(path)
+                except KeyboardInterrupt:
+                    results = pause(filename=path)
+                    if results:
+                        continue
+                    else:
+                        pass
+            else:
+                pass

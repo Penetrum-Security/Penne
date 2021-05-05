@@ -540,3 +540,17 @@ def sort_yara_rule_output(rules_data, display_yara_data):
                 print(" - {}".format(description))
             else:
                 print(" - {}".format(name))
+
+
+def load_user_defined():
+    log.debug("loading user defined signatures")
+    config = init()
+    path = config["config"]["penne_folders"]["user_defined"].format(HOME)
+    return ["{}/{}".format(path, f) for f in os.listdir(path)]
+
+
+def contains(path, ignored_dirs):
+    for d in ignored_dirs:
+        if d in path:
+            return True
+    return False
